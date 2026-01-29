@@ -417,11 +417,6 @@ export default function Index() {
             <View style={styles.bottomInfo}>
               <Text style={styles.bottomLabel}>Pinhole: {pinholeSize}mm</Text>
               <Text style={styles.bottomLabel}>FOV: {viewfinderSize.fov}°</Text>
-              {useRedFilter && (
-                <View style={styles.redFilterBadge}>
-                  <Text style={styles.redFilterText}>RED FILTER</Text>
-                </View>
-              )}
             </View>
 
             <View style={styles.controlButtons}>
