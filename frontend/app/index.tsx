@@ -653,8 +653,26 @@ export default function Index() {
 
             <ScrollView style={styles.modalScroll}>
               <View style={styles.exposureContainer}>
+                {/* Calculated Exposure Result - At Top */}
+                {calculatedExposure ? (
+                  <View style={styles.exposureResult}>
+                    <Text style={styles.exposureResultLabel}>Suggested Exposure:</Text>
+                    <Text style={styles.exposureResultValue}>{calculatedExposure}</Text>
+                    <Text style={styles.exposureResultNote}>
+                      {selectedCondition} conditions • ISO {iso} • f/{calculateFStop()}
+                      {useRedFilter && ' • Red Filter'}
+                    </Text>
+                  </View>
+                ) : (
+                  <View style={styles.exposurePlaceholder}>
+                    <Text style={styles.exposurePlaceholderText}>
+                      Select lighting conditions below to calculate exposure
+                    </Text>
+                  </View>
+                )}
+
                 <Text style={styles.exposureSubtitle}>
-                  Select lighting conditions (Sunny 16 Rule)
+                  Camera Settings
                 </Text>
                 
                 <View style={styles.exposureInfo}>
@@ -666,12 +684,37 @@ export default function Index() {
                     <Text style={styles.exposureInfoLabel}>F-Stop:</Text>
                     <Text style={styles.exposureInfoValue}>f/{calculateFStop()}</Text>
                   </View>
-                  {useRedFilter && (
-                    <View style={[styles.redFilterBadge, { marginTop: 8 }]}>
-                      <Text style={styles.redFilterText}>RED FILTER (+3 stops)</Text>
-                    </View>
-                  )}
                 </View>
+
+                {/* Red Filter Toggle */}
+                <TouchableOpacity
+                  style={styles.filterToggleRow}
+                  onPress={() => {
+                    setUseRedFilter(!useRedFilter);
+                    // Recalculate if a condition is already selected
+                    if (selectedCondition) {
+                      const condition = lightingConditions.find(c => c.name === selectedCondition);
+                      if (condition) {
+                        const exposure = calculateSunny16Exposure(condition);
+                        setCalculatedExposure(exposure);
+                      }
+                    }
+                  }}
+                >
+                  <View style={styles.checkbox}>
+                    {useRedFilter && (
+                      <Ionicons name="checkmark" size={18} color={AMBER} />
+                    )}
+                  </View>
+                  <View style={styles.filterToggleText}>
+                    <Text style={styles.checkboxLabel}>Red Filter Compensation</Text>
+                    <Text style={styles.filterToggleNote}>Adds +3 stops to exposure time</Text>
+                  </View>
+                </TouchableOpacity>
+
+                <Text style={styles.exposureSubtitle}>
+                  Select Lighting Conditions (Sunny 16 Rule)
+                </Text>
 
                 {/* Lighting Condition Options */}
                 <View style={styles.conditionsGrid}>
@@ -691,17 +734,6 @@ export default function Index() {
                     </TouchableOpacity>
                   ))}
                 </View>
-
-                {/* Calculated Exposure Result */}
-                {calculatedExposure && (
-                  <View style={styles.exposureResult}>
-                    <Text style={styles.exposureResultLabel}>Suggested Exposure:</Text>
-                    <Text style={styles.exposureResultValue}>{calculatedExposure}</Text>
-                    <Text style={styles.exposureResultNote}>
-                      Based on Sunny 16 rule for {selectedCondition} conditions
-                    </Text>
-                  </View>
-                )}
               </View>
             </ScrollView>
           </View>
