@@ -612,8 +612,7 @@ export default function Index() {
         transparent={true}
         onRequestClose={() => {
           setShowExposure(false);
-          setSelectedCondition(null);
-          setCalculatedExposure(null);
+          // Don't clear the exposure state - keep it for viewfinder overlay
         }}
       >
         <View style={styles.modalContainer}>
