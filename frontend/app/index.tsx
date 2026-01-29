@@ -560,11 +560,18 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingHorizontal: 16,
   },
+  bottomBarLandscape: {
+    paddingBottom: 16,
+    paddingTop: 12,
+  },
   bottomInfo: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     marginBottom: 16,
     alignItems: 'center',
+  },
+  bottomInfoLandscape: {
+    marginBottom: 8,
   },
   bottomLabel: {
     color: '#ccc',
