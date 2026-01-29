@@ -141,30 +141,34 @@ export default function Index() {
     const fovRadians = 2 * Math.atan(filmFormat.width / (2 * focalLength));
     const fovDegrees = (fovRadians * 180) / Math.PI;
     
-    // Prioritize viewfinder - use more space in both orientations
+    // Maximize viewfinder size with proper padding
     let viewfinderWidth: number;
     let viewfinderHeight: number;
     
     if (isLandscape) {
-      // Landscape: maximize horizontal space, leave room for controls
-      const availableHeight = screenHeight * 0.7; // 70% of height for viewfinder
-      viewfinderHeight = availableHeight;
+      // Landscape: Use left 65% for camera, maximize viewfinder within that
+      const cameraWidth = screenWidth * 0.65;
+      const availableHeight = screenHeight - 40; // Padding from top/bottom
+      
+      viewfinderHeight = availableHeight * 0.95; // Use 95% of available height
       viewfinderWidth = viewfinderHeight * filmAspectRatio;
       
       // If too wide, constrain by width
-      if (viewfinderWidth > screenWidth * 0.6) {
-        viewfinderWidth = screenWidth * 0.6;
+      if (viewfinderWidth > cameraWidth * 0.9) {
+        viewfinderWidth = cameraWidth * 0.9;
         viewfinderHeight = viewfinderWidth / filmAspectRatio;
       }
     } else {
-      // Portrait: maximize width, leave room for top/bottom controls
-      const availableWidth = screenWidth * 0.85; // 85% of width for viewfinder
-      viewfinderWidth = availableWidth;
+      // Portrait: Maximize width with padding, constrain by height for controls
+      const availableWidth = screenWidth - 32; // 16px padding on each side
+      const availableHeight = screenHeight * 0.65; // Leave room for top/bottom controls
+      
+      viewfinderWidth = availableWidth * 0.95; // Use 95% of available width
       viewfinderHeight = viewfinderWidth / filmAspectRatio;
       
       // If too tall, constrain by height
-      if (viewfinderHeight > screenHeight * 0.5) {
-        viewfinderHeight = screenHeight * 0.5;
+      if (viewfinderHeight > availableHeight) {
+        viewfinderHeight = availableHeight;
         viewfinderWidth = viewfinderHeight * filmAspectRatio;
       }
     }
