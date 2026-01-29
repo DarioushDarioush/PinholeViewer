@@ -261,65 +261,34 @@ export default function Index() {
     <View style={styles.container}>
       <StatusBar style="light" />
       
-      {/* Camera View - Always mounted, outside conditional rendering */}
+      {/* Single Camera View - Always mounted with dynamic styling */}
       <View style={isLandscape ? styles.landscapeContainer : styles.container}>
-        {isLandscape && (
-          <View style={styles.landscapeCameraSection}>
-            <CameraView
-              style={styles.camera}
-              facing="back"
-              ref={cameraRef}
-            />
-            
-            {/* Viewfinder Overlay */}
-            <View style={styles.overlayContainer}>
+        <View style={isLandscape ? styles.landscapeCameraSection : styles.cameraContainer}>
+          <CameraView
+            style={styles.camera}
+            facing="back"
+            ref={cameraRef}
+          />
+          
+          {/* Viewfinder Overlay */}
+          <View style={styles.overlayContainer}>
+            <View style={styles.greyArea} />
+            <View style={styles.middleSection}>
               <View style={styles.greyArea} />
-              <View style={styles.middleSection}>
-                <View style={styles.greyArea} />
-                <View
-                  style={[
-                    styles.viewfinder,
-                    {
-                      width: viewfinderSize.width,
-                      height: viewfinderSize.height,
-                    },
-                  ]}
-                />
-                <View style={styles.greyArea} />
-              </View>
+              <View
+                style={[
+                  styles.viewfinder,
+                  {
+                    width: viewfinderSize.width,
+                    height: viewfinderSize.height,
+                  },
+                ]}
+              />
               <View style={styles.greyArea} />
             </View>
+            <View style={styles.greyArea} />
           </View>
-        )}
-
-        {!isLandscape && (
-          <View style={styles.cameraContainer}>
-            <CameraView
-              style={styles.camera}
-              facing="back"
-              ref={cameraRef}
-            />
-            
-            {/* Viewfinder Overlay */}
-            <View style={styles.overlayContainer}>
-              <View style={styles.greyArea} />
-              <View style={styles.middleSection}>
-                <View style={styles.greyArea} />
-                <View
-                  style={[
-                    styles.viewfinder,
-                    {
-                      width: viewfinderSize.width,
-                      height: viewfinderSize.height,
-                    },
-                  ]}
-                />
-                <View style={styles.greyArea} />
-              </View>
-              <View style={styles.greyArea} />
-            </View>
-          </View>
-        )}
+        </View>
 
         {/* Landscape Info Panel */}
         {isLandscape && (
