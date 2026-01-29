@@ -43,11 +43,6 @@ interface Profile {
   useRedFilter: boolean;
 }
 
-interface CameraExposureState {
-  exposureTime?: number;
-  iso?: number;
-}
-
 export default function Index() {
   const [permission, requestPermission] = useCameraPermissions();
   const [focalLength, setFocalLength] = useState(50);
@@ -55,41 +50,15 @@ export default function Index() {
   const [filmFormat, setFilmFormat] = useState(FILM_FORMATS[2]); // 6x6 default
   const [iso, setIso] = useState(100);
   const [useRedFilter, setUseRedFilter] = useState(false);
-  const [isMetering, setIsMetering] = useState(false);
-  const [exposureData, setExposureData] = useState<any>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [showProfiles, setShowProfiles] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileName, setProfileName] = useState('');
-  const [meterCalibration, setMeterCalibration] = useState(0); // EV compensation
-  const [showCalibration, setShowCalibration] = useState(false);
-  const [currentEV, setCurrentEV] = useState<number | null>(null);
   const cameraRef = useRef<any>(null);
 
   useEffect(() => {
     loadProfiles();
-    loadCalibration();
   }, []);
-
-  const loadCalibration = async () => {
-    try {
-      const stored = await AsyncStorage.getItem('light_meter_calibration');
-      if (stored) {
-        setMeterCalibration(parseFloat(stored));
-      }
-    } catch (error) {
-      console.error('Error loading calibration:', error);
-    }
-  };
-
-  const saveCalibration = async (value: number) => {
-    try {
-      await AsyncStorage.setItem('light_meter_calibration', value.toString());
-      setMeterCalibration(value);
-    } catch (error) {
-      console.error('Error saving calibration:', error);
-    }
-  };
 
   const loadProfiles = async () => {
     try {
