@@ -669,6 +669,81 @@ export default function Index() {
           </View>
         </View>
       </Modal>
+
+      {/* Light Meter Calibration Modal */}
+      <Modal
+        visible={showCalibration}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCalibration(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Calibrate Light Meter</Text>
+              <TouchableOpacity onPress={() => setShowCalibration(false)}>
+                <Ionicons name="close" size={28} color={AMBER} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.calibrationContent}>
+              <Text style={styles.calibrationDescription}>
+                Adjust the light meter reading to match a known reference or external meter.
+                Positive values increase exposure (for darker readings), negative values
+                decrease exposure (for brighter readings).
+              </Text>
+
+              <View style={styles.calibrationDisplay}>
+                <Text style={styles.calibrationCurrentLabel}>Current Adjustment:</Text>
+                <Text style={styles.calibrationCurrentValue}>
+                  {meterCalibration > 0 ? '+' : ''}{meterCalibration.toFixed(1)} EV
+                </Text>
+              </View>
+
+              <View style={styles.calibrationControls}>
+                <TouchableOpacity
+                  style={styles.calibrationBtn}
+                  onPress={() => saveCalibration(meterCalibration - 0.5)}
+                >
+                  <Text style={styles.calibrationBtnText}>-0.5</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.calibrationBtn}
+                  onPress={() => saveCalibration(meterCalibration - 0.1)}
+                >
+                  <Text style={styles.calibrationBtnText}>-0.1</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.calibrationBtn, styles.calibrationReset]}
+                  onPress={() => saveCalibration(0)}
+                >
+                  <Text style={styles.calibrationResetText}>Reset</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.calibrationBtn}
+                  onPress={() => saveCalibration(meterCalibration + 0.1)}
+                >
+                  <Text style={styles.calibrationBtnText}>+0.1</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.calibrationBtn}
+                  onPress={() => saveCalibration(meterCalibration + 0.5)}
+                >
+                  <Text style={styles.calibrationBtnText}>+0.5</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.calibrationInfo}>
+                <MaterialIcons name="info-outline" size={20} color={AMBER} />
+                <Text style={styles.calibrationInfoText}>
+                  Take a meter reading of a mid-tone gray card or known scene, then adjust
+                  until the suggested exposure matches your reference meter.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
