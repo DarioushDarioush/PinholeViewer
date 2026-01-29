@@ -1268,7 +1268,8 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   exposureResult: {
-    marginTop: 24,
+    marginTop: 0,
+    marginBottom: 20,
     backgroundColor: 'rgba(245, 158, 11, 0.15)',
     borderWidth: 2,
     borderColor: AMBER,
@@ -1292,5 +1293,22 @@ const styles = StyleSheet.create({
     color: '#ccc',
     fontSize: 12,
     textAlign: 'center',
+  },
+  filterToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: DARK_BG,
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 20,
+  },
+  filterToggleText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  filterToggleNote: {
+    color: '#666',
+    fontSize: 11,
+    marginTop: 2,
   },
 });
