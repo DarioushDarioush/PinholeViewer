@@ -135,6 +135,45 @@ export default function Index() {
     return (focalLength / pinholeSize).toFixed(1);
   };
 
+  // Calculate exposure using Sunny 16 rule
+  const calculateSunny16Exposure = (condition: typeof lightingConditions[0]) => {
+    const actualFStop = parseFloat(calculateFStop());
+    const referenceFStop = condition.fStop;
+    
+    // Sunny 16 rule: Base exposure at f/16 = 1/ISO
+    const baseExposure = 1 / iso;
+    
+    // Adjust for actual f-stop vs reference f-stop
+    // Exposure time = base × (actual_f_stop / reference_f_stop)²
+    let exposureTime = baseExposure * Math.pow(actualFStop / referenceFStop, 2);
+    
+    // Apply red filter compensation if enabled (+3 stops = 8x exposure)
+    if (useRedFilter) {
+      exposureTime *= 8;
+    }
+    
+    // Format exposure time
+    const formatExposure = (seconds: number) => {
+      if (seconds < 1) {
+        return `1/${Math.round(1 / seconds)}s`;
+      } else if (seconds < 60) {
+        return `${seconds.toFixed(1)}s`;
+      } else {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.round(seconds % 60);
+        return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`;
+      }
+    };
+    
+    return formatExposure(exposureTime);
+  };
+
+  const handleConditionSelect = (condition: typeof lightingConditions[0]) => {
+    setSelectedCondition(condition.name);
+    const exposure = calculateSunny16Exposure(condition);
+    setCalculatedExposure(exposure);
+  };
+
   // Calculate optimal pinhole diameter
   const calculateOptimalPinhole = () => {
     const wavelength = 0.00055; // 550nm in mm
