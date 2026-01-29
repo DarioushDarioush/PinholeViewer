@@ -1187,11 +1187,27 @@ const styles = StyleSheet.create({
   exposureContainer: {
     padding: 20,
   },
+  exposurePlaceholder: {
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    borderWidth: 2,
+    borderColor: '#333',
+    borderRadius: 8,
+    padding: 40,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  exposurePlaceholderText: {
+    color: '#666',
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
   exposureSubtitle: {
     color: '#999',
     fontSize: 14,
     marginBottom: 16,
     textAlign: 'center',
+    marginTop: 20,
   },
   exposureInfo: {
     backgroundColor: DARK_BG,
