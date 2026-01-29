@@ -530,6 +530,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: 'rgba(0, 0, 0, 0.8)',
   },
+  topBarLandscape: {
+    top: 20,
+    flexDirection: 'row',
+    paddingVertical: 8,
+  },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
