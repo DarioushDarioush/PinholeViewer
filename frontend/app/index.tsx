@@ -205,101 +205,181 @@ export default function Index() {
     <View style={styles.container}>
       <StatusBar style="light" />
       
-      {/* Camera View */}
-      <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          ref={cameraRef}
-        />
-        
-        {/* Viewfinder Overlay - Positioned absolutely over camera */}
-        <View style={styles.overlayContainer}>
-          {/* Top grey area */}
-          <View style={styles.greyArea} />
-          
-          {/* Middle section with viewfinder */}
-          <View style={styles.middleSection}>
-            <View style={styles.greyArea} />
-            <View
-              style={[
-                styles.viewfinder,
-                {
-                  width: viewfinderSize.width,
-                  height: viewfinderSize.height,
-                },
-              ]}
+      {isLandscape ? (
+        // Landscape Layout: Viewfinder Left, Info Right
+        <View style={styles.landscapeContainer}>
+          {/* Camera View on Left */}
+          <View style={styles.landscapeCameraSection}>
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              ref={cameraRef}
             />
-            <View style={styles.greyArea} />
-          </View>
-          
-          {/* Bottom grey area */}
-          <View style={styles.greyArea} />
-        </View>
-      </View>
-
-      {/* Top Info Bar - Adapts to orientation */}
-      <View style={[
-        styles.topBar,
-        isLandscape && styles.topBarLandscape
-      ]}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Format: </Text>
-          <Text style={styles.infoValue}>{filmFormat.name}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Focal: </Text>
-          <Text style={styles.infoValue}>{focalLength}mm</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>f/</Text>
-          <Text style={styles.infoValue}>{calculateFStop()}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>ISO: </Text>
-          <Text style={styles.infoValue}>{iso}</Text>
-        </View>
-      </View>
-
-      {/* Bottom Control Bar - Adapts to orientation */}
-      <View style={[
-        styles.bottomBar,
-        isLandscape && styles.bottomBarLandscape
-      ]}>
-        <View style={[
-          styles.bottomInfo,
-          isLandscape && styles.bottomInfoLandscape
-        ]}>
-          <Text style={styles.bottomLabel}>Pinhole: {pinholeSize}mm</Text>
-          <Text style={styles.bottomLabel}>FOV: {viewfinderSize.fov}°</Text>
-          {useRedFilter && (
-            <View style={styles.redFilterBadge}>
-              <Text style={styles.redFilterText}>RED FILTER</Text>
+            
+            {/* Viewfinder Overlay */}
+            <View style={styles.overlayContainer}>
+              <View style={styles.greyArea} />
+              <View style={styles.middleSection}>
+                <View style={styles.greyArea} />
+                <View
+                  style={[
+                    styles.viewfinder,
+                    {
+                      width: viewfinderSize.width,
+                      height: viewfinderSize.height,
+                    },
+                  ]}
+                />
+                <View style={styles.greyArea} />
+              </View>
+              <View style={styles.greyArea} />
             </View>
-          )}
-        </View>
+          </View>
 
-        <View style={[
-          styles.controlButtons,
-          isLandscape && styles.controlButtonsLandscape
-        ]}>
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => setShowSettings(true)}
-          >
-            <Ionicons name="settings-outline" size={24} color={AMBER} />
-            <Text style={styles.controlButtonText}>Settings</Text>
-          </TouchableOpacity>
+          {/* Info Panel on Right */}
+          <View style={styles.landscapeInfoPanel}>
+            <ScrollView 
+              style={styles.landscapeInfoScroll}
+              contentContainerStyle={styles.landscapeInfoContent}
+            >
+              {/* Camera Info */}
+              <View style={styles.landscapeInfoSection}>
+                <Text style={styles.landscapeSectionTitle}>CAMERA INFO</Text>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>Format:</Text>
+                  <Text style={styles.infoValue}>{filmFormat.name}</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>Focal Length:</Text>
+                  <Text style={styles.infoValue}>{focalLength}mm</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>F-Stop:</Text>
+                  <Text style={styles.infoValue}>f/{calculateFStop()}</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>ISO:</Text>
+                  <Text style={styles.infoValue}>{iso}</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>Pinhole:</Text>
+                  <Text style={styles.infoValue}>{pinholeSize}mm</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>FOV:</Text>
+                  <Text style={styles.infoValue}>{viewfinderSize.fov}°</Text>
+                </View>
+                {useRedFilter && (
+                  <View style={[styles.redFilterBadge, { marginTop: 8 }]}>
+                    <Text style={styles.redFilterText}>RED FILTER</Text>
+                  </View>
+                )}
+              </View>
 
-          <TouchableOpacity
-            style={styles.controlButton}
-            onPress={() => setShowProfiles(true)}
-          >
-            <MaterialIcons name="bookmark-outline" size={24} color={AMBER} />
-            <Text style={styles.controlButtonText}>Profiles</Text>
-          </TouchableOpacity>
+              {/* Control Buttons */}
+              <View style={styles.landscapeControlSection}>
+                <TouchableOpacity
+                  style={styles.landscapeButton}
+                  onPress={() => setShowSettings(true)}
+                >
+                  <Ionicons name="settings-outline" size={24} color={AMBER} />
+                  <Text style={styles.landscapeButtonText}>Settings</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.landscapeButton}
+                  onPress={() => setShowProfiles(true)}
+                >
+                  <MaterialIcons name="bookmark-outline" size={24} color={AMBER} />
+                  <Text style={styles.landscapeButtonText}>Profiles</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
         </View>
-      </View>
+      ) : (
+        // Portrait Layout: Original
+        <>
+          {/* Camera View */}
+          <View style={styles.cameraContainer}>
+            <CameraView
+              style={styles.camera}
+              facing="back"
+              ref={cameraRef}
+            />
+            
+            {/* Viewfinder Overlay */}
+            <View style={styles.overlayContainer}>
+              <View style={styles.greyArea} />
+              <View style={styles.middleSection}>
+                <View style={styles.greyArea} />
+                <View
+                  style={[
+                    styles.viewfinder,
+                    {
+                      width: viewfinderSize.width,
+                      height: viewfinderSize.height,
+                    },
+                  ]}
+                />
+                <View style={styles.greyArea} />
+              </View>
+              <View style={styles.greyArea} />
+            </View>
+          </View>
+
+          {/* Top Info Bar */}
+          <View style={styles.topBar}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Format: </Text>
+              <Text style={styles.infoValue}>{filmFormat.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Focal: </Text>
+              <Text style={styles.infoValue}>{focalLength}mm</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>f/</Text>
+              <Text style={styles.infoValue}>{calculateFStop()}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>ISO: </Text>
+              <Text style={styles.infoValue}>{iso}</Text>
+            </View>
+          </View>
+
+          {/* Bottom Control Bar */}
+          <View style={styles.bottomBar}>
+            <View style={styles.bottomInfo}>
+              <Text style={styles.bottomLabel}>Pinhole: {pinholeSize}mm</Text>
+              <Text style={styles.bottomLabel}>FOV: {viewfinderSize.fov}°</Text>
+              {useRedFilter && (
+                <View style={styles.redFilterBadge}>
+                  <Text style={styles.redFilterText}>RED FILTER</Text>
+                </View>
+              )}
+            </View>
+
+            <View style={styles.controlButtons}>
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setShowSettings(true)}
+              >
+                <Ionicons name="settings-outline" size={24} color={AMBER} />
+                <Text style={styles.controlButtonText}>Settings</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setShowProfiles(true)}
+              >
+                <MaterialIcons name="bookmark-outline" size={24} color={AMBER} />
+                <Text style={styles.controlButtonText}>Profiles</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </>
+      )}
 
       {/* Exposure data display removed */}
 
