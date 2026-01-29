@@ -180,24 +180,49 @@ export default function Index() {
     };
   };
 
-  // Light metering and exposure calculation using real camera data
+  // Light metering and exposure calculation using real light sensor
   const performLightMeter = async () => {
     setIsMetering(true);
     
     try {
-      // Get camera properties - in a real implementation, you'd access the camera's
-      // actual exposure values. For now, we'll use a reasonable estimation method.
-      // The camera's auto-exposure provides good EV estimation
+      // Check if light sensor is available
+      const isAvailable = await LightSensor.isAvailableAsync();
       
-      // Simulate getting camera exposure data
-      // In production, you might use: cameraRef.current?.getAvailablePictureSizesAsync()
-      // or camera sensor APIs specific to the device
+      if (!isAvailable) {
+        // Fallback: use a default value but inform user
+        Alert.alert(
+          'Light Sensor Unavailable',
+          'Your device does not have a light sensor. Using estimated values. You can calibrate the meter for more accurate readings.',
+          [{ text: 'OK' }]
+        );
+        
+        // Use default mid-range value
+        const baseEV = 12;
+        const calibratedEV = baseEV + meterCalibration;
+        setCurrentEV(calibratedEV);
+        const exposure = calculateExposure(calibratedEV);
+        setExposureData(exposure);
+        setIsMetering(false);
+        return;
+      }
       
-      setTimeout(() => {
-        // Estimate EV from ambient light (12-14 is typical daylight)
-        // This would ideally come from camera sensor data
-        // For now, using a mid-range value that users can calibrate
-        const baseEV = 12; // Typical outdoor shade/cloudy day
+      // Subscribe to light sensor updates
+      const subscription = LightSensor.addListener((data) => {
+        // Convert lux to EV
+        // EV = log2(lux / 2.5) 
+        // This is based on the standard formula where 2.5 lux = EV 0
+        const lux = data.illuminance;
+        
+        // Ensure we have a valid lux reading
+        if (lux <= 0) {
+          subscription.remove();
+          Alert.alert('Error', 'Unable to get valid light reading');
+          setIsMetering(false);
+          return;
+        }
+        
+        // Calculate EV from lux
+        const baseEV = Math.log2(lux / 2.5);
         
         // Apply user calibration
         const calibratedEV = baseEV + meterCalibration;
@@ -205,11 +230,24 @@ export default function Index() {
         
         const exposure = calculateExposure(calibratedEV);
         setExposureData(exposure);
+        
+        // Unsubscribe after getting reading
+        subscription.remove();
         setIsMetering(false);
-      }, 800);
+      });
+      
+      // Set timeout in case sensor doesn't respond
+      setTimeout(() => {
+        subscription.remove();
+        if (isMetering) {
+          Alert.alert('Timeout', 'Light sensor reading timed out');
+          setIsMetering(false);
+        }
+      }, 3000);
+      
     } catch (error) {
       console.error('Light metering error:', error);
-      Alert.alert('Error', 'Failed to read light levels');
+      Alert.alert('Error', 'Failed to read light levels: ' + error);
       setIsMetering(false);
     }
   };
