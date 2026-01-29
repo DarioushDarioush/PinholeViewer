@@ -638,6 +638,89 @@ export default function Index() {
         </View>
       </Modal>
 
+      {/* Exposure Calculator Modal (Sunny 16) */}
+      <Modal
+        visible={showExposure}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => {
+          setShowExposure(false);
+          setSelectedCondition(null);
+          setCalculatedExposure(null);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Exposure Calculator</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowExposure(false);
+                  setSelectedCondition(null);
+                  setCalculatedExposure(null);
+                }}
+              >
+                <Ionicons name="close" size={28} color={AMBER} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.modalScroll}>
+              <View style={styles.exposureContainer}>
+                <Text style={styles.exposureSubtitle}>
+                  Select lighting conditions (Sunny 16 Rule)
+                </Text>
+                
+                <View style={styles.exposureInfo}>
+                  <View style={styles.exposureInfoRow}>
+                    <Text style={styles.exposureInfoLabel}>ISO:</Text>
+                    <Text style={styles.exposureInfoValue}>{iso}</Text>
+                  </View>
+                  <View style={styles.exposureInfoRow}>
+                    <Text style={styles.exposureInfoLabel}>F-Stop:</Text>
+                    <Text style={styles.exposureInfoValue}>f/{calculateFStop()}</Text>
+                  </View>
+                  {useRedFilter && (
+                    <View style={[styles.redFilterBadge, { marginTop: 8 }]}>
+                      <Text style={styles.redFilterText}>RED FILTER (+3 stops)</Text>
+                    </View>
+                  )}
+                </View>
+
+                {/* Lighting Condition Options */}
+                <View style={styles.conditionsGrid}>
+                  {lightingConditions.map((condition, index) => (
+                    <TouchableOpacity
+                      key={index}
+                      style={[
+                        styles.conditionCard,
+                        selectedCondition === condition.name && styles.conditionCardSelected,
+                      ]}
+                      onPress={() => handleConditionSelect(condition)}
+                    >
+                      <Text style={styles.conditionIcon}>{condition.icon}</Text>
+                      <Text style={styles.conditionName}>{condition.name}</Text>
+                      <Text style={styles.conditionDesc}>{condition.description}</Text>
+                      <Text style={styles.conditionFStop}>f/{condition.fStop}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                {/* Calculated Exposure Result */}
+                {calculatedExposure && (
+                  <View style={styles.exposureResult}>
+                    <Text style={styles.exposureResultLabel}>Suggested Exposure:</Text>
+                    <Text style={styles.exposureResultValue}>{calculatedExposure}</Text>
+                    <Text style={styles.exposureResultNote}>
+                      Based on Sunny 16 rule for {selectedCondition} conditions
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
       {/* Light meter calibration modal removed */}
     </View>
   );
