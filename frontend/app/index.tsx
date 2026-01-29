@@ -270,29 +270,6 @@ export default function Index() {
       setIsMetering(false);
     }
   };
-  
-  // Convert brightness value (0-255) to EV
-  const brightnessToEV = (brightness: number): number => {
-    // Brightness to EV mapping
-    // This is calibrated based on typical camera response
-    // Very dark (0-30): EV 2-6
-    // Dark (30-60): EV 6-9
-    // Medium (60-120): EV 9-12
-    // Bright (120-180): EV 12-14
-    // Very bright (180-255): EV 14-17
-    
-    if (brightness < 30) {
-      return 2 + (brightness / 30) * 4;
-    } else if (brightness < 60) {
-      return 6 + ((brightness - 30) / 30) * 3;
-    } else if (brightness < 120) {
-      return 9 + ((brightness - 60) / 60) * 3;
-    } else if (brightness < 180) {
-      return 12 + ((brightness - 120) / 60) * 2;
-    } else {
-      return 14 + ((brightness - 180) / 75) * 3;
-    }
-  };
 
   const calculateExposure = (ev: number) => {
     const fStop = parseFloat(calculateFStop());
