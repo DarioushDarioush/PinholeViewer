@@ -756,6 +756,7 @@ const styles = StyleSheet.create({
     borderColor: AMBER,
     borderStyle: 'solid',
     position: 'relative',
+    overflow: 'hidden',
   },
   viewfinderExposureOverlay: {
     position: 'absolute',
