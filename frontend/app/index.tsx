@@ -180,75 +180,126 @@ export default function Index() {
     };
   };
 
-  // Light metering and exposure calculation using real light sensor
+  // Light metering using camera - takes a photo and analyzes brightness
   const performLightMeter = async () => {
+    if (!cameraRef.current) {
+      Alert.alert('Error', 'Camera not ready');
+      return;
+    }
+    
     setIsMetering(true);
     
     try {
-      // Check if light sensor is available
-      const isAvailable = await LightSensor.isAvailableAsync();
+      // Take a photo to analyze the scene
+      const photo = await cameraRef.current.takePictureAsync({
+        quality: 0.1, // Low quality is fine for metering
+        base64: true,
+        skipProcessing: true,
+      });
       
-      if (!isAvailable) {
-        // Fallback: use a default value but inform user
-        Alert.alert(
-          'Light Sensor Unavailable',
-          'Your device does not have a light sensor. Using estimated values. You can calibrate the meter for more accurate readings.',
-          [{ text: 'OK' }]
-        );
-        
-        // Use default mid-range value
-        const baseEV = 12;
-        const calibratedEV = baseEV + meterCalibration;
-        setCurrentEV(calibratedEV);
-        const exposure = calculateExposure(calibratedEV);
-        setExposureData(exposure);
+      if (!photo || !photo.base64) {
+        Alert.alert('Error', 'Failed to capture image for metering');
         setIsMetering(false);
         return;
       }
       
-      // Subscribe to light sensor updates
-      const subscription = LightSensor.addListener((data) => {
-        // Convert lux to EV
-        // EV = log2(lux / 2.5) 
-        // This is based on the standard formula where 2.5 lux = EV 0
-        const lux = data.illuminance;
-        
-        // Ensure we have a valid lux reading
-        if (lux <= 0) {
-          subscription.remove();
-          Alert.alert('Error', 'Unable to get valid light reading');
-          setIsMetering(false);
-          return;
-        }
-        
-        // Calculate EV from lux
-        const baseEV = Math.log2(lux / 2.5);
-        
-        // Apply user calibration
-        const calibratedEV = baseEV + meterCalibration;
-        setCurrentEV(calibratedEV);
-        
-        const exposure = calculateExposure(calibratedEV);
-        setExposureData(exposure);
-        
-        // Unsubscribe after getting reading
-        subscription.remove();
-        setIsMetering(false);
-      });
+      // Analyze the brightness of the image
+      // We'll use a simple approach: decode the image and calculate average brightness
+      const brightness = await analyzeImageBrightness(photo.base64);
       
-      // Set timeout in case sensor doesn't respond
-      setTimeout(() => {
-        subscription.remove();
-        if (isMetering) {
-          Alert.alert('Timeout', 'Light sensor reading timed out');
-          setIsMetering(false);
-        }
-      }, 3000);
+      // Convert brightness to EV
+      // Brightness range is 0-255, we map this to a reasonable EV range
+      // Typical indoor: 50-100 brightness → EV 8-10
+      // Bright outdoor: 150-220 brightness → EV 13-16
+      // We use a logarithmic scale to match how exposure works
+      
+      const baseEV = brightnessToEV(brightness);
+      
+      // Apply user calibration
+      const calibratedEV = baseEV + meterCalibration;
+      setCurrentEV(calibratedEV);
+      
+      const exposure = calculateExposure(calibratedEV);
+      setExposureData(exposure);
+      setIsMetering(false);
       
     } catch (error) {
       console.error('Light metering error:', error);
-      Alert.alert('Error', 'Failed to read light levels: ' + error);
+      Alert.alert('Error', 'Failed to read light from camera: ' + error);
       setIsMetering(false);
+    }
+  };
+  
+  // Analyze image brightness from base64
+  const analyzeImageBrightness = async (base64: string): Promise<number> => {
+    return new Promise((resolve) => {
+      // Create an image element to load the data
+      const img = new window.Image();
+      img.onload = () => {
+        // Create canvas to analyze pixels
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        if (!ctx) {
+          resolve(128); // Default mid-brightness
+          return;
+        }
+        
+        // Use smaller size for faster analysis
+        canvas.width = 100;
+        canvas.height = 100;
+        ctx.drawImage(img, 0, 0, 100, 100);
+        
+        // Get image data
+        const imageData = ctx.getImageData(0, 0, 100, 100);
+        const data = imageData.data;
+        
+        // Calculate average brightness (luminance)
+        let totalBrightness = 0;
+        const pixelCount = data.length / 4;
+        
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          
+          // Calculate luminance using standard formula
+          const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
+          totalBrightness += brightness;
+        }
+        
+        const avgBrightness = totalBrightness / pixelCount;
+        resolve(avgBrightness);
+      };
+      
+      img.onerror = () => {
+        resolve(128); // Default mid-brightness on error
+      };
+      
+      img.src = `data:image/jpeg;base64,${base64}`;
+    });
+  };
+  
+  // Convert brightness value (0-255) to EV
+  const brightnessToEV = (brightness: number): number => {
+    // Brightness to EV mapping
+    // This is calibrated based on typical camera response
+    // Very dark (0-30): EV 2-6
+    // Dark (30-60): EV 6-9
+    // Medium (60-120): EV 9-12
+    // Bright (120-180): EV 12-14
+    // Very bright (180-255): EV 14-17
+    
+    if (brightness < 30) {
+      return 2 + (brightness / 30) * 4;
+    } else if (brightness < 60) {
+      return 6 + ((brightness - 30) / 30) * 3;
+    } else if (brightness < 120) {
+      return 9 + ((brightness - 60) / 60) * 3;
+    } else if (brightness < 180) {
+      return 12 + ((brightness - 120) / 60) * 2;
+    } else {
+      return 14 + ((brightness - 180) / 75) * 3;
     }
   };
 
