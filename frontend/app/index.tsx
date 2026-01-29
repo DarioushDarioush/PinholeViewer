@@ -256,12 +256,13 @@ export default function Index() {
       <StatusBar style="light" />
       
       {/* Camera View */}
-      <CameraView
-        style={styles.camera}
-        facing="back"
-        ref={cameraRef}
-      >
-        {/* Viewfinder Overlay */}
+      <View style={styles.cameraContainer}>
+        <CameraView
+          style={styles.camera}
+          facing="back"
+        />
+        
+        {/* Viewfinder Overlay - Positioned absolutely over camera */}
         <View style={styles.overlayContainer}>
           {/* Top grey area */}
           <View style={styles.greyArea} />
@@ -284,7 +285,7 @@ export default function Index() {
           {/* Bottom grey area */}
           <View style={styles.greyArea} />
         </View>
-      </CameraView>
+      </View>
 
       {/* Top Info Bar */}
       <View style={styles.topBar}>
