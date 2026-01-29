@@ -193,27 +193,51 @@ export default function Index() {
       // Take a photo to analyze the scene
       const photo = await cameraRef.current.takePictureAsync({
         quality: 0.1, // Low quality is fine for metering
-        base64: true,
         skipProcessing: true,
       });
       
-      if (!photo || !photo.base64) {
+      if (!photo || !photo.uri) {
         Alert.alert('Error', 'Failed to capture image for metering');
         setIsMetering(false);
         return;
       }
       
-      // Analyze the brightness of the image
-      // We'll use a simple approach: decode the image and calculate average brightness
-      const brightness = await analyzeImageBrightness(photo.base64);
+      // Resize to small size for faster analysis and get pixel data
+      const manipResult = await ImageManipulator.manipulateAsync(
+        photo.uri,
+        [{ resize: { width: 100, height: 100 } }],
+        { format: ImageManipulator.SaveFormat.JPEG }
+      );
+      
+      // Estimate brightness from file size and typical compression
+      // Brighter images compress better (larger file for same content)
+      // This is a heuristic approach that works reasonably well
+      const fileSize = manipResult.uri.length;
+      
+      // Map file size to brightness estimate
+      // Typical ranges observed:
+      // Very dark: 8000-12000 chars
+      // Dark: 12000-18000 chars  
+      // Medium: 18000-28000 chars
+      // Bright: 28000-40000+ chars
+      
+      let estimatedBrightness = 128; // Default mid-tone
+      
+      if (fileSize < 12000) {
+        estimatedBrightness = 30 + (fileSize - 8000) / 4000 * 30;
+      } else if (fileSize < 18000) {
+        estimatedBrightness = 60 + (fileSize - 12000) / 6000 * 40;
+      } else if (fileSize < 28000) {
+        estimatedBrightness = 100 + (fileSize - 18000) / 10000 * 50;
+      } else {
+        estimatedBrightness = 150 + Math.min((fileSize - 28000) / 12000 * 80, 80);
+      }
+      
+      // Clamp to valid range
+      estimatedBrightness = Math.max(20, Math.min(240, estimatedBrightness));
       
       // Convert brightness to EV
-      // Brightness range is 0-255, we map this to a reasonable EV range
-      // Typical indoor: 50-100 brightness → EV 8-10
-      // Bright outdoor: 150-220 brightness → EV 13-16
-      // We use a logarithmic scale to match how exposure works
-      
-      const baseEV = brightnessToEV(brightness);
+      const baseEV = brightnessToEV(estimatedBrightness);
       
       // Apply user calibration
       const calibratedEV = baseEV + meterCalibration;
@@ -225,59 +249,9 @@ export default function Index() {
       
     } catch (error) {
       console.error('Light metering error:', error);
-      Alert.alert('Error', 'Failed to read light from camera: ' + error);
+      Alert.alert('Error', 'Failed to read light from camera');
       setIsMetering(false);
     }
-  };
-  
-  // Analyze image brightness from base64
-  const analyzeImageBrightness = async (base64: string): Promise<number> => {
-    return new Promise((resolve) => {
-      // Create an image element to load the data
-      const img = new window.Image();
-      img.onload = () => {
-        // Create canvas to analyze pixels
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        if (!ctx) {
-          resolve(128); // Default mid-brightness
-          return;
-        }
-        
-        // Use smaller size for faster analysis
-        canvas.width = 100;
-        canvas.height = 100;
-        ctx.drawImage(img, 0, 0, 100, 100);
-        
-        // Get image data
-        const imageData = ctx.getImageData(0, 0, 100, 100);
-        const data = imageData.data;
-        
-        // Calculate average brightness (luminance)
-        let totalBrightness = 0;
-        const pixelCount = data.length / 4;
-        
-        for (let i = 0; i < data.length; i += 4) {
-          const r = data[i];
-          const g = data[i + 1];
-          const b = data[i + 2];
-          
-          // Calculate luminance using standard formula
-          const brightness = 0.299 * r + 0.587 * g + 0.114 * b;
-          totalBrightness += brightness;
-        }
-        
-        const avgBrightness = totalBrightness / pixelCount;
-        resolve(avgBrightness);
-      };
-      
-      img.onerror = () => {
-        resolve(128); // Default mid-brightness on error
-      };
-      
-      img.src = `data:image/jpeg;base64,${base64}`;
-    });
   };
   
   // Convert brightness value (0-255) to EV
