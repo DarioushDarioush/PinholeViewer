@@ -323,6 +323,128 @@ export default function Index() {
 
         {/* Landscape Info Panel */}
         {isLandscape && (
+          <View style={styles.landscapeInfoPanel}>
+            <ScrollView 
+              style={styles.landscapeInfoScroll}
+              contentContainerStyle={styles.landscapeInfoContent}
+            >
+              {/* Camera Info */}
+              <View style={styles.landscapeInfoSection}>
+                <Text style={styles.landscapeSectionTitle}>CAMERA INFO</Text>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>Format:</Text>
+                  <Text style={styles.infoValue}>{filmFormat.name}</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>Focal Length:</Text>
+                  <Text style={styles.infoValue}>{focalLength}mm</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>F-Stop:</Text>
+                  <Text style={styles.infoValue}>f/{calculateFStop()}</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>ISO:</Text>
+                  <Text style={styles.infoValue}>{iso}</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>Pinhole:</Text>
+                  <Text style={styles.infoValue}>{pinholeSize}mm</Text>
+                </View>
+                <View style={styles.landscapeInfoRow}>
+                  <Text style={styles.infoLabel}>FOV:</Text>
+                  <Text style={styles.infoValue}>{viewfinderSize.fov}°</Text>
+                </View>
+              </View>
+
+              {/* Control Buttons */}
+              <View style={styles.landscapeControlSection}>
+                <TouchableOpacity
+                  style={styles.landscapeButton}
+                  onPress={() => setShowSettings(true)}
+                >
+                  <Ionicons name="settings-outline" size={24} color={AMBER} />
+                  <Text style={styles.landscapeButtonText}>Settings</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.landscapeButton}
+                  onPress={() => setShowExposure(true)}
+                >
+                  <Ionicons name="sunny-outline" size={24} color={AMBER} />
+                  <Text style={styles.landscapeButtonText}>Exposure</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.landscapeButton}
+                  onPress={() => setShowProfiles(true)}
+                >
+                  <MaterialIcons name="bookmark-outline" size={24} color={AMBER} />
+                  <Text style={styles.landscapeButtonText}>Profiles</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </View>
+        )}
+
+        {/* Portrait Top Bar */}
+        {!isLandscape && (
+          <View style={styles.topBar}>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Format: </Text>
+              <Text style={styles.infoValue}>{filmFormat.name}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>Focal: </Text>
+              <Text style={styles.infoValue}>{focalLength}mm</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>f/</Text>
+              <Text style={styles.infoValue}>{calculateFStop()}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.infoLabel}>ISO: </Text>
+              <Text style={styles.infoValue}>{iso}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Portrait Bottom Bar */}
+        {!isLandscape && (
+          <View style={styles.bottomBar}>
+            <View style={styles.bottomInfo}>
+              <Text style={styles.bottomLabel}>Pinhole: {pinholeSize}mm</Text>
+              <Text style={styles.bottomLabel}>FOV: {viewfinderSize.fov}°</Text>
+            </View>
+
+            <View style={styles.controlButtons}>
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setShowSettings(true)}
+              >
+                <Ionicons name="settings-outline" size={24} color={AMBER} />
+                <Text style={styles.controlButtonText}>Settings</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setShowExposure(true)}
+              >
+                <Ionicons name="sunny-outline" size={24} color={AMBER} />
+                <Text style={styles.controlButtonText}>Exposure</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.controlButton}
+                onPress={() => setShowProfiles(true)}
+              >
+                <MaterialIcons name="bookmark-outline" size={24} color={AMBER} />
+                <Text style={styles.controlButtonText}>Profiles</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+      </View>
             <ScrollView 
               style={styles.landscapeInfoScroll}
               contentContainerStyle={styles.landscapeInfoContent}
