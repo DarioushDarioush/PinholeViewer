@@ -199,6 +199,7 @@ export default function Index() {
   }
 
   const viewfinderSize = calculateViewfinderSize();
+  const isLandscape = viewfinderSize.isLandscape;
 
   return (
     <View style={styles.container}>
@@ -237,8 +238,11 @@ export default function Index() {
         </View>
       </View>
 
-      {/* Top Info Bar */}
-      <View style={styles.topBar}>
+      {/* Top Info Bar - Adapts to orientation */}
+      <View style={[
+        styles.topBar,
+        isLandscape && styles.topBarLandscape
+      ]}>
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>Format: </Text>
           <Text style={styles.infoValue}>{filmFormat.name}</Text>
@@ -257,9 +261,15 @@ export default function Index() {
         </View>
       </View>
 
-      {/* Bottom Control Bar */}
-      <View style={styles.bottomBar}>
-        <View style={styles.bottomInfo}>
+      {/* Bottom Control Bar - Adapts to orientation */}
+      <View style={[
+        styles.bottomBar,
+        isLandscape && styles.bottomBarLandscape
+      ]}>
+        <View style={[
+          styles.bottomInfo,
+          isLandscape && styles.bottomInfoLandscape
+        ]}>
           <Text style={styles.bottomLabel}>Pinhole: {pinholeSize}mm</Text>
           <Text style={styles.bottomLabel}>FOV: {viewfinderSize.fov}°</Text>
           {useRedFilter && (
@@ -269,7 +279,10 @@ export default function Index() {
           )}
         </View>
 
-        <View style={styles.controlButtons}>
+        <View style={[
+          styles.controlButtons,
+          isLandscape && styles.controlButtonsLandscape
+        ]}>
           <TouchableOpacity
             style={styles.controlButton}
             onPress={() => setShowSettings(true)}
@@ -277,8 +290,6 @@ export default function Index() {
             <Ionicons name="settings-outline" size={24} color={AMBER} />
             <Text style={styles.controlButtonText}>Settings</Text>
           </TouchableOpacity>
-
-          {/* Light meter button removed */}
 
           <TouchableOpacity
             style={styles.controlButton}
