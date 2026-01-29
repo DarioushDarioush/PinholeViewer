@@ -259,7 +259,7 @@ export default function Index() {
       <View style={styles.cameraContainer}>
         <Camera
           style={styles.camera}
-          type={Camera.Constants?.Type?.back || 'back'}
+          type={CameraType.back}
           ref={cameraRef}
         >
           {/* Viewfinder Overlay - Positioned absolutely over camera */}
