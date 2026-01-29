@@ -173,6 +173,7 @@ export default function Index() {
     setSelectedCondition(condition.name);
     const exposure = calculateSunny16Exposure(condition);
     setCalculatedExposure(exposure);
+    console.log('Exposure calculated:', exposure, 'Condition:', condition.name);
     
     // Scroll to top to reveal exposure result
     setTimeout(() => {
