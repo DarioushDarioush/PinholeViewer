@@ -617,7 +617,10 @@ export default function Index() {
               </TouchableOpacity>
             </View>
 
-            <ScrollView style={styles.modalScroll}>
+            <ScrollView 
+              style={styles.modalScroll}
+              ref={exposureScrollRef}
+            >
               <View style={styles.exposureContainer}>
                 {/* Calculated Exposure Result - At Top */}
                 {calculatedExposure ? (
