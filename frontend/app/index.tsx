@@ -128,10 +128,11 @@ export default function Index() {
     return Math.sqrt(1.9 * wavelength * focalLength).toFixed(2);
   };
 
-  // Calculate field of view dimensions for overlay
+  // Calculate field of view dimensions for overlay - orientation aware
   const calculateViewfinderSize = () => {
-    const screenWidth = Dimensions.get('window').width;
-    const screenHeight = Dimensions.get('window').height;
+    const screenWidth = dimensions.width;
+    const screenHeight = dimensions.height;
+    const isLandscape = screenWidth > screenHeight;
     
     // Calculate aspect ratio of film format
     const filmAspectRatio = filmFormat.width / filmFormat.height;
@@ -140,19 +141,39 @@ export default function Index() {
     const fovRadians = 2 * Math.atan(filmFormat.width / (2 * focalLength));
     const fovDegrees = (fovRadians * 180) / Math.PI;
     
-    // Use 70% of screen as max viewfinder area
-    let viewfinderWidth = screenWidth * 0.7;
-    let viewfinderHeight = viewfinderWidth / filmAspectRatio;
+    // Prioritize viewfinder - use more space in both orientations
+    let viewfinderWidth: number;
+    let viewfinderHeight: number;
     
-    if (viewfinderHeight > screenHeight * 0.5) {
-      viewfinderHeight = screenHeight * 0.5;
+    if (isLandscape) {
+      // Landscape: maximize horizontal space, leave room for controls
+      const availableHeight = screenHeight * 0.7; // 70% of height for viewfinder
+      viewfinderHeight = availableHeight;
       viewfinderWidth = viewfinderHeight * filmAspectRatio;
+      
+      // If too wide, constrain by width
+      if (viewfinderWidth > screenWidth * 0.6) {
+        viewfinderWidth = screenWidth * 0.6;
+        viewfinderHeight = viewfinderWidth / filmAspectRatio;
+      }
+    } else {
+      // Portrait: maximize width, leave room for top/bottom controls
+      const availableWidth = screenWidth * 0.85; // 85% of width for viewfinder
+      viewfinderWidth = availableWidth;
+      viewfinderHeight = viewfinderWidth / filmAspectRatio;
+      
+      // If too tall, constrain by height
+      if (viewfinderHeight > screenHeight * 0.5) {
+        viewfinderHeight = screenHeight * 0.5;
+        viewfinderWidth = viewfinderHeight * filmAspectRatio;
+      }
     }
     
     return {
       width: viewfinderWidth,
       height: viewfinderHeight,
       fov: fovDegrees.toFixed(1),
+      isLandscape,
     };
   };
 
