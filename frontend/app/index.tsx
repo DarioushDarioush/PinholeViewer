@@ -232,15 +232,21 @@ export default function Index() {
     };
   };
 
-  if (hasPermission === null) {
+  if (!permission) {
     return <View style={styles.container} />;
   }
 
-  if (hasPermission === false) {
+  if (!permission.granted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.errorText}>Camera access denied</Text>
-        <Text style={styles.errorSubtext}>Please enable camera permissions in settings</Text>
+        <Text style={styles.errorText}>Camera permission required</Text>
+        <Text style={styles.errorSubtext}>Please enable camera access</Text>
+        <TouchableOpacity 
+          style={styles.permissionButton}
+          onPress={requestPermission}
+        >
+          <Text style={styles.permissionButtonText}>Grant Permission</Text>
+        </TouchableOpacity>
       </View>
     );
   }
