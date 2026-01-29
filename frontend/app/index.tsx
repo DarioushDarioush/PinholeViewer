@@ -579,6 +579,25 @@ export default function Index() {
                 </View>
                 <Text style={styles.checkboxLabel}>Red Filter (+3 stops)</Text>
               </TouchableOpacity>
+
+              {/* Light Meter Calibration */}
+              <View style={styles.settingGroup}>
+                <TouchableOpacity
+                  style={styles.calibrationButton}
+                  onPress={() => {
+                    setShowSettings(false);
+                    setShowCalibration(true);
+                  }}
+                >
+                  <MaterialIcons name="tune" size={24} color={AMBER} />
+                  <Text style={styles.calibrationButtonText}>
+                    Light Meter Calibration
+                  </Text>
+                  <Text style={styles.calibrationValue}>
+                    {meterCalibration > 0 ? '+' : ''}{meterCalibration.toFixed(1)} EV
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </ScrollView>
           </View>
         </View>
