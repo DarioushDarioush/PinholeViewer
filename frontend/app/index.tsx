@@ -842,43 +842,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 12,
   },
-  landscapeDivider: {
-    height: 1,
-    backgroundColor: '#333',
-    marginVertical: 16,
-  },
-  exposureDisplay: {
-    position: 'absolute',
-    top: 98,
-    left: 16,
-    right: 16,
-    backgroundColor: 'rgba(26, 26, 26, 0.95)',
-    borderWidth: 1,
-    borderColor: AMBER,
-    borderRadius: 8,
-    padding: 12,
-  },
-  exposureDisplayRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  exposureDisplayLabel: {
-    color: '#999',
-    fontSize: 13,
-  },
-  exposureDisplayValue: {
-    color: AMBER,
-    fontSize: 20,
-    fontWeight: 'bold',
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  exposureDisplayCondition: {
-    color: '#ccc',
-    fontSize: 11,
-    textAlign: 'center',
-  },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
