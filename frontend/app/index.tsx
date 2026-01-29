@@ -325,11 +325,6 @@ export default function Index() {
                   <Text style={styles.infoLabel}>FOV:</Text>
                   <Text style={styles.infoValue}>{viewfinderSize.fov}°</Text>
                 </View>
-                {useRedFilter && (
-                  <View style={[styles.redFilterBadge, { marginTop: 8 }]}>
-                    <Text style={styles.redFilterText}>RED FILTER</Text>
-                  </View>
-                )}
               </View>
 
               {/* Control Buttons */}
