@@ -325,27 +325,6 @@ export default function Index() {
                   <Text style={styles.infoLabel}>FOV:</Text>
                   <Text style={styles.infoValue}>{viewfinderSize.fov}°</Text>
                 </View>
-                
-                {/* Exposure Display in Landscape */}
-                {calculatedExposure && selectedCondition && (
-                  <>
-                    <View style={styles.landscapeDivider} />
-                    <Text style={styles.landscapeSectionTitle}>EXPOSURE</Text>
-                    <View style={styles.landscapeInfoRow}>
-                      <Text style={styles.infoLabel}>Time:</Text>
-                      <Text style={styles.infoValue}>{calculatedExposure}</Text>
-                    </View>
-                    <View style={styles.landscapeInfoRow}>
-                      <Text style={styles.infoLabel}>Condition:</Text>
-                      <Text style={styles.infoValue}>{selectedCondition}</Text>
-                    </View>
-                    {useRedFilter && (
-                      <View style={[styles.redFilterBadge, { marginTop: 8, alignSelf: 'flex-start' }]}>
-                        <Text style={styles.redFilterText}>RED FILTER</Text>
-                      </View>
-                    )}
-                  </>
-                )}
               </View>
 
               {/* Control Buttons */}
