@@ -180,76 +180,93 @@ export default function Index() {
     };
   };
 
-  // Light metering using camera - takes a photo and analyzes brightness via backend
+  // Light metering using device ambient light sensor for real-time readings
   const performLightMeter = async () => {
-    if (!cameraRef.current) {
-      Alert.alert('Error', 'Camera not ready');
-      return;
-    }
-    
     setIsMetering(true);
     
     try {
-      // Take a photo to analyze the scene
-      const photo = await cameraRef.current.takePictureAsync({
-        quality: 0.3, // Medium quality for accurate analysis
-        skipProcessing: true,
-      });
+      // Check if light sensor is available
+      const isAvailable = await LightSensor.isAvailableAsync();
       
-      if (!photo || !photo.uri) {
-        Alert.alert('Error', 'Failed to capture image for metering');
+      if (!isAvailable) {
+        Alert.alert(
+          'Light Sensor Unavailable',
+          'Your device does not have a light sensor. Please use calibration to adjust readings manually.',
+          [{ text: 'OK' }]
+        );
+        
+        // Use default mid-range value as fallback
+        const baseEV = 12;
+        const calibratedEV = baseEV + meterCalibration;
+        setCurrentEV(calibratedEV);
+        const exposure = calculateExposure(calibratedEV);
+        setExposureData(exposure);
         setIsMetering(false);
         return;
       }
       
-      // Create form data to upload the image
-      const formData = new FormData();
+      // Set sensor update interval
+      LightSensor.setUpdateInterval(100);
       
-      // For React Native, we need to format the file properly
-      const imageFile: any = {
-        uri: photo.uri,
-        type: 'image/jpeg',
-        name: 'meter.jpg',
-      };
+      // Take multiple readings and average them for stability
+      const readings: number[] = [];
+      let readingCount = 0;
+      const targetReadings = 5;
       
-      formData.append('file', imageFile);
-      
-      // Get backend URL from env
-      const backendUrl = process.env.EXPO_PUBLIC_BACKEND_URL || '';
-      
-      // Send to backend for analysis
-      const response = await fetch(`${backendUrl}/api/analyze-brightness`, {
-        method: 'POST',
-        body: formData,
-        headers: {
-          'Accept': 'application/json',
-        },
+      // Subscribe to light sensor updates
+      const subscription = LightSensor.addListener((data) => {
+        const lux = data.illuminance;
+        
+        // Ensure we have a valid lux reading
+        if (lux > 0) {
+          readings.push(lux);
+          readingCount++;
+          
+          // Once we have enough readings, calculate average
+          if (readingCount >= targetReadings) {
+            subscription.remove();
+            
+            // Calculate average lux
+            const avgLux = readings.reduce((a, b) => a + b, 0) / readings.length;
+            
+            // Convert lux to EV using standard formula
+            // EV = log2(lux / 2.5)
+            // Reference: 2.5 lux = EV 0
+            const baseEV = Math.log2(Math.max(avgLux, 2.5) / 2.5);
+            
+            // Apply user calibration
+            const calibratedEV = baseEV + meterCalibration;
+            setCurrentEV(calibratedEV);
+            
+            const exposure = calculateExposure(calibratedEV);
+            setExposureData(exposure);
+            setIsMetering(false);
+          }
+        }
       });
       
-      if (!response.ok) {
-        throw new Error('Failed to analyze image brightness');
-      }
-      
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      // Get the EV from backend analysis
-      const baseEV = data.ev;
-      
-      // Apply user calibration
-      const calibratedEV = baseEV + meterCalibration;
-      setCurrentEV(calibratedEV);
-      
-      const exposure = calculateExposure(calibratedEV);
-      setExposureData(exposure);
-      setIsMetering(false);
+      // Set timeout in case sensor doesn't respond
+      setTimeout(() => {
+        subscription.remove();
+        if (isMetering) {
+          if (readings.length > 0) {
+            // Use whatever readings we got
+            const avgLux = readings.reduce((a, b) => a + b, 0) / readings.length;
+            const baseEV = Math.log2(Math.max(avgLux, 2.5) / 2.5);
+            const calibratedEV = baseEV + meterCalibration;
+            setCurrentEV(calibratedEV);
+            const exposure = calculateExposure(calibratedEV);
+            setExposureData(exposure);
+          } else {
+            Alert.alert('Timeout', 'Light sensor did not respond. Try again.');
+          }
+          setIsMetering(false);
+        }
+      }, 3000);
       
     } catch (error) {
       console.error('Light metering error:', error);
-      Alert.alert('Error', 'Failed to read light from camera. Please try again.');
+      Alert.alert('Error', 'Failed to read light sensor: ' + error);
       setIsMetering(false);
     }
   };
