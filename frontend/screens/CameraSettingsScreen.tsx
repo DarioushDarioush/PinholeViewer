@@ -503,21 +503,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // LANDSCAPE Layout
-  landscapeContainer: {
+  // LANDSCAPE Layout: Settings Panel Only (camera is in parent)
+  landscapeSettingsPanelOnly: {
     flex: 1,
-    flexDirection: 'row',
-    backgroundColor: DARK_BG,
-  },
-  landscapeLeftPanel: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  landscapeRightPanel: {
-    width: '38%',
     backgroundColor: CHARCOAL,
-    borderLeftWidth: 2,
-    borderLeftColor: AMBER,
   },
   landscapeScrollContent: {
     padding: 16,
