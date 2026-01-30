@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Dimensions,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
@@ -40,9 +41,16 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [profileName, setProfileName] = useState('');
   const [showProfiles, setShowProfiles] = useState(false);
+  const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+
+  const isLandscape = dimensions.width > dimensions.height;
 
   useEffect(() => {
     loadProfiles();
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setDimensions(window);
+    });
+    return () => subscription?.remove();
   }, []);
 
   const loadProfiles = async () => {
@@ -107,224 +115,261 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
     return Math.sqrt(1.9 * wavelength * settings.focalLength).toFixed(2);
   };
 
+  // Render the settings content (used in both layouts)
+  const renderSettingsContent = () => (
+    <>
+      <Text style={[styles.title, isLandscape && styles.titleLandscape]}>Camera Settings</Text>
+
+      {/* Focal Length */}
+      <View style={styles.settingGroup}>
+        <Text style={styles.settingLabel}>Focal Length (mm)</Text>
+        <TextInput
+          style={[styles.input, isLandscape && styles.inputLandscape]}
+          value={settings.focalLength.toString()}
+          onChangeText={(text) =>
+            updateSettings({ ...settings, focalLength: parseFloat(text) || 0 })
+          }
+          keyboardType="numeric"
+          placeholderTextColor="#666"
+        />
+      </View>
+
+      {/* Pinhole Size */}
+      <View style={styles.settingGroup}>
+        <Text style={styles.settingLabel}>Pinhole Diameter (mm)</Text>
+        <TextInput
+          style={[styles.input, isLandscape && styles.inputLandscape]}
+          value={settings.pinholeSize.toString()}
+          onChangeText={(text) =>
+            updateSettings({ ...settings, pinholeSize: parseFloat(text) || 0 })
+          }
+          keyboardType="numeric"
+          placeholderTextColor="#666"
+        />
+        <Text style={styles.hint}>Optimal: {calculateOptimalPinhole()}mm</Text>
+      </View>
+
+      {/* F-Stop Display */}
+      <View style={[styles.fStopDisplay, isLandscape && styles.fStopDisplayLandscape]}>
+        <Text style={styles.fStopLabel}>F-Stop:</Text>
+        <Text style={[styles.fStopValue, isLandscape && styles.fStopValueLandscape]}>
+          f/{calculateFStop()}
+        </Text>
+      </View>
+
+      {/* Film Format */}
+      <View style={styles.settingGroup}>
+        <Text style={styles.settingLabel}>Film Format</Text>
+        <View style={[styles.formatGrid, isLandscape && styles.formatGridLandscape]}>
+          {FILM_FORMATS.map((format) => (
+            <TouchableOpacity
+              key={format.name}
+              style={[
+                styles.formatButton,
+                isLandscape && styles.formatButtonLandscape,
+                settings.filmFormat.name === format.name && styles.formatButtonActive,
+              ]}
+              onPress={() => updateSettings({ ...settings, filmFormat: format })}
+              accessible={true}
+              accessibilityRole="button"
+              accessibilityState={{ selected: settings.filmFormat.name === format.name }}
+            >
+              <Text
+                style={[
+                  styles.formatButtonText,
+                  isLandscape && styles.formatButtonTextLandscape,
+                  settings.filmFormat.name === format.name && styles.formatButtonTextActive,
+                ]}
+              >
+                {format.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Film Orientation */}
+      <View style={styles.settingGroup}>
+        <Text style={styles.settingLabel}>Film Orientation</Text>
+        <View style={[styles.orientationContainer, isLandscape && styles.orientationContainerLandscape]}>
+          <TouchableOpacity
+            style={[
+              styles.orientationButton,
+              isLandscape && styles.orientationButtonLandscape,
+              settings.filmOrientation === 'landscape' && styles.orientationButtonActive,
+            ]}
+            onPress={() => updateSettings({ ...settings, filmOrientation: 'landscape' })}
+          >
+            <Ionicons 
+              name="phone-landscape-outline" 
+              size={isLandscape ? 20 : 28} 
+              color={settings.filmOrientation === 'landscape' ? DARK_BG : TEXT_SECONDARY} 
+            />
+            <Text
+              style={[
+                styles.orientationText,
+                isLandscape && styles.orientationTextLandscape,
+                settings.filmOrientation === 'landscape' && styles.orientationTextActive,
+              ]}
+            >
+              Landscape
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.orientationButton,
+              isLandscape && styles.orientationButtonLandscape,
+              settings.filmOrientation === 'portrait' && styles.orientationButtonActive,
+            ]}
+            onPress={() => updateSettings({ ...settings, filmOrientation: 'portrait' })}
+          >
+            <Ionicons 
+              name="phone-portrait-outline" 
+              size={isLandscape ? 20 : 28} 
+              color={settings.filmOrientation === 'portrait' ? DARK_BG : TEXT_SECONDARY} 
+            />
+            <Text
+              style={[
+                styles.orientationText,
+                isLandscape && styles.orientationTextLandscape,
+                settings.filmOrientation === 'portrait' && styles.orientationTextActive,
+              ]}
+            >
+              Portrait
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* ISO */}
+      <View style={styles.settingGroup}>
+        <Text style={styles.settingLabel}>ISO</Text>
+        <View style={[styles.formatGrid, isLandscape && styles.formatGridLandscape]}>
+          {ISO_VALUES.map((isoValue) => (
+            <TouchableOpacity
+              key={isoValue}
+              style={[
+                styles.formatButton,
+                isLandscape && styles.formatButtonLandscape,
+                settings.iso === isoValue && styles.formatButtonActive,
+              ]}
+              onPress={() => updateSettings({ ...settings, iso: isoValue })}
+            >
+              <Text
+                style={[
+                  styles.formatButtonText,
+                  isLandscape && styles.formatButtonTextLandscape,
+                  settings.iso === isoValue && styles.formatButtonTextActive,
+                ]}
+              >
+                {isoValue}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Profile Management - Only show in portrait or if expanded in landscape */}
+      {(!isLandscape || showProfiles) && (
+        <View style={[styles.profileSection, isLandscape && styles.profileSectionLandscape]}>
+          <TouchableOpacity
+            style={styles.profileToggleButton}
+            onPress={() => setShowProfiles(!showProfiles)}
+          >
+            <Ionicons
+              name={showProfiles ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={AMBER}
+            />
+            <Text style={[styles.profileToggleText, isLandscape && styles.profileToggleTextLandscape]}>
+              Camera Profiles
+            </Text>
+          </TouchableOpacity>
+
+          {showProfiles && (
+            <View style={styles.profileContent}>
+              <View style={styles.saveProfileRow}>
+                <TextInput
+                  style={[styles.input, styles.profileNameInput, isLandscape && styles.inputLandscape]}
+                  value={profileName}
+                  onChangeText={setProfileName}
+                  placeholder="Profile name"
+                  placeholderTextColor="#666"
+                />
+                <TouchableOpacity style={[styles.saveButton, isLandscape && styles.saveButtonLandscape]} onPress={saveProfile}>
+                  <Ionicons name="save" size={20} color={DARK_BG} />
+                </TouchableOpacity>
+              </View>
+
+              {profiles.length === 0 ? (
+                <Text style={styles.emptyText}>No saved profiles</Text>
+              ) : (
+                profiles.map((profile) => (
+                  <View key={profile.id} style={[styles.profileCard, isLandscape && styles.profileCardLandscape]}>
+                    <TouchableOpacity
+                      style={styles.profileInfo}
+                      onPress={() => loadProfile(profile)}
+                    >
+                      <Text style={[styles.profileName, isLandscape && styles.profileNameLandscape]}>{profile.name}</Text>
+                      <Text style={[styles.profileDetails, isLandscape && styles.profileDetailsLandscape]}>
+                        {profile.filmFormat.name} • {profile.focalLength}mm • ISO {profile.iso}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteProfile(profile.id)}>
+                      <Ionicons name="trash" size={20} color="#ef4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))
+              )}
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Collapsed profiles button in landscape */}
+      {isLandscape && !showProfiles && (
+        <TouchableOpacity
+          style={styles.profileToggleButtonLandscape}
+          onPress={() => setShowProfiles(true)}
+        >
+          <Ionicons name="folder-outline" size={16} color={AMBER} />
+          <Text style={styles.profileToggleTextLandscape}>Profiles</Text>
+        </TouchableOpacity>
+      )}
+    </>
+  );
+
+  // LANDSCAPE LAYOUT
+  if (isLandscape) {
+    return (
+      <View style={styles.landscapeContainer}>
+        {/* Left side - empty/branding area */}
+        <View style={styles.landscapeLeftPanel}>
+          <Ionicons name="camera-outline" size={48} color={TEXT_MUTED} />
+          <Text style={styles.landscapeBrandText}>Pinhole</Text>
+          <Text style={styles.landscapeBrandSubtext}>Camera Setup</Text>
+        </View>
+
+        {/* Right side - settings panel */}
+        <View style={styles.landscapeRightPanel}>
+          <ScrollView 
+            style={styles.landscapeScrollView}
+            contentContainerStyle={styles.landscapeScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {renderSettingsContent()}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  }
+
+  // PORTRAIT LAYOUT
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.content}>
-          <Text style={styles.title}>Camera Settings</Text>
-
-          {/* Focal Length */}
-          <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel}>Focal Length (mm)</Text>
-            <TextInput
-              style={styles.input}
-              value={settings.focalLength.toString()}
-              onChangeText={(text) =>
-                updateSettings({ ...settings, focalLength: parseFloat(text) || 0 })
-              }
-              keyboardType="numeric"
-              placeholderTextColor="#666"
-            />
-          </View>
-
-          {/* Pinhole Size */}
-          <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel}>Pinhole Diameter (mm)</Text>
-            <TextInput
-              style={styles.input}
-              value={settings.pinholeSize.toString()}
-              onChangeText={(text) =>
-                updateSettings({ ...settings, pinholeSize: parseFloat(text) || 0 })
-              }
-              keyboardType="numeric"
-              placeholderTextColor="#666"
-            />
-            <Text style={styles.hint}>Optimal: {calculateOptimalPinhole()}mm</Text>
-          </View>
-
-          {/* F-Stop Display */}
-          <View 
-            style={styles.fStopDisplay}
-            accessible={true}
-            accessibilityRole="text"
-            accessibilityLabel={`F-Stop: f/${calculateFStop()}`}
-          >
-            <Text style={styles.fStopLabel}>F-Stop:</Text>
-            <Text style={styles.fStopValue}>f/{calculateFStop()}</Text>
-          </View>
-
-          {/* Film Format */}
-          <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel} accessibilityRole="header">Film Format</Text>
-            <View style={styles.formatGrid}>
-              {FILM_FORMATS.map((format) => (
-                <TouchableOpacity
-                  key={format.name}
-                  style={[
-                    styles.formatButton,
-                    settings.filmFormat.name === format.name && styles.formatButtonActive,
-                  ]}
-                  onPress={() => updateSettings({ ...settings, filmFormat: format })}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: settings.filmFormat.name === format.name }}
-                  accessibilityLabel={`${format.name} film format`}
-                  accessibilityHint={settings.filmFormat.name === format.name ? 'Currently selected' : 'Tap to select'}
-                >
-                  <Text
-                    style={[
-                      styles.formatButtonText,
-                      settings.filmFormat.name === format.name && styles.formatButtonTextActive,
-                    ]}
-                  >
-                    {format.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Film Orientation */}
-          <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel} accessibilityRole="header">Film Orientation</Text>
-            <View style={styles.orientationContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.orientationButton,
-                  settings.filmOrientation === 'landscape' && styles.orientationButtonActive,
-                ]}
-                onPress={() => updateSettings({ ...settings, filmOrientation: 'landscape' })}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityState={{ selected: settings.filmOrientation === 'landscape' }}
-                accessibilityLabel="Landscape orientation"
-              >
-                <Ionicons 
-                  name="phone-landscape-outline" 
-                  size={28} 
-                  color={settings.filmOrientation === 'landscape' ? DARK_BG : TEXT_SECONDARY} 
-                />
-                <Text
-                  style={[
-                    styles.orientationText,
-                    settings.filmOrientation === 'landscape' && styles.orientationTextActive,
-                  ]}
-                >
-                  Landscape
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.orientationButton,
-                  settings.filmOrientation === 'portrait' && styles.orientationButtonActive,
-                ]}
-                onPress={() => updateSettings({ ...settings, filmOrientation: 'portrait' })}
-                accessible={true}
-                accessibilityRole="button"
-                accessibilityState={{ selected: settings.filmOrientation === 'portrait' }}
-                accessibilityLabel="Portrait orientation"
-              >
-                <Ionicons 
-                  name="phone-portrait-outline" 
-                  size={28} 
-                  color={settings.filmOrientation === 'portrait' ? DARK_BG : TEXT_SECONDARY} 
-                />
-                <Text
-                  style={[
-                    styles.orientationText,
-                    settings.filmOrientation === 'portrait' && styles.orientationTextActive,
-                  ]}
-                >
-                  Portrait
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* ISO */}
-          <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel} accessibilityRole="header">ISO</Text>
-            <View style={styles.formatGrid}>
-              {ISO_VALUES.map((isoValue) => (
-                <TouchableOpacity
-                  key={isoValue}
-                  style={[
-                    styles.formatButton,
-                    settings.iso === isoValue && styles.formatButtonActive,
-                  ]}
-                  onPress={() => updateSettings({ ...settings, iso: isoValue })}
-                  accessible={true}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: settings.iso === isoValue }}
-                  accessibilityLabel={`ISO ${isoValue}`}
-                >
-                  <Text
-                    style={[
-                      styles.formatButtonText,
-                      settings.iso === isoValue && styles.formatButtonTextActive,
-                    ]}
-                  >
-                    {isoValue}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-
-          {/* Profile Management */}
-          <View style={styles.profileSection}>
-            <TouchableOpacity
-              style={styles.profileToggleButton}
-              onPress={() => setShowProfiles(!showProfiles)}
-            >
-              <Ionicons
-                name={showProfiles ? 'chevron-up' : 'chevron-down'}
-                size={24}
-                color={AMBER}
-              />
-              <Text style={styles.profileToggleText}>Camera Profiles</Text>
-            </TouchableOpacity>
-
-            {showProfiles && (
-              <View style={styles.profileContent}>
-                {/* Save Profile */}
-                <View style={styles.saveProfileRow}>
-                  <TextInput
-                    style={[styles.input, styles.profileNameInput]}
-                    value={profileName}
-                    onChangeText={setProfileName}
-                    placeholder="Profile name"
-                    placeholderTextColor="#666"
-                  />
-                  <TouchableOpacity style={styles.saveButton} onPress={saveProfile}>
-                    <Ionicons name="save" size={24} color={DARK_BG} />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Profile List */}
-                {profiles.length === 0 ? (
-                  <Text style={styles.emptyText}>No saved profiles</Text>
-                ) : (
-                  profiles.map((profile) => (
-                    <View key={profile.id} style={styles.profileCard}>
-                      <TouchableOpacity
-                        style={styles.profileInfo}
-                        onPress={() => loadProfile(profile)}
-                      >
-                        <Text style={styles.profileName}>{profile.name}</Text>
-                        <Text style={styles.profileDetails}>
-                          {profile.filmFormat.name} • {profile.focalLength}mm • ISO {profile.iso}
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={() => deleteProfile(profile.id)}>
-                        <Ionicons name="trash" size={24} color="#ef4444" />
-                      </TouchableOpacity>
-                    </View>
-                  ))
-                )}
-              </View>
-            )}
-          </View>
+          {renderSettingsContent()}
         </View>
       </ScrollView>
     </View>
@@ -332,6 +377,7 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
 }
 
 const styles = StyleSheet.create({
+  // SHARED / PORTRAIT STYLES
   container: {
     flex: 1,
     backgroundColor: DARK_BG,
@@ -350,7 +396,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   settingGroup: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   settingLabel: {
     color: '#ccc',
@@ -379,7 +425,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   fStopLabel: {
     color: '#999',
@@ -405,6 +451,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginRight: 8,
     marginBottom: 8,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   formatButtonActive: {
     backgroundColor: AMBER,
@@ -435,7 +483,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 14,
     paddingHorizontal: 16,
-    minHeight: 56, // WCAG minimum touch target
+    minHeight: 56,
     gap: 10,
   },
   orientationButtonActive: {
@@ -452,8 +500,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   profileSection: {
-    marginTop: 32,
-    paddingTop: 24,
+    marginTop: 24,
+    paddingTop: 20,
     borderTopWidth: 1,
     borderTopColor: '#333',
   },
@@ -469,7 +517,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   profileContent: {
-    marginTop: 16,
+    marginTop: 12,
   },
   saveProfileRow: {
     flexDirection: 'row',
@@ -484,19 +532,21 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     justifyContent: 'center',
+    minWidth: 48,
+    alignItems: 'center',
   },
   emptyText: {
     color: '#666',
     textAlign: 'center',
     fontSize: 14,
-    marginTop: 20,
+    marginTop: 16,
   },
   profileCard: {
     flexDirection: 'row',
     backgroundColor: CHARCOAL,
     borderRadius: 8,
     padding: 12,
-    marginBottom: 12,
+    marginBottom: 10,
     alignItems: 'center',
   },
   profileInfo: {
@@ -511,5 +561,118 @@ const styles = StyleSheet.create({
   profileDetails: {
     color: '#999',
     fontSize: 13,
+  },
+
+  // LANDSCAPE STYLES
+  landscapeContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: DARK_BG,
+  },
+  landscapeLeftPanel: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRightWidth: 2,
+    borderRightColor: AMBER,
+    paddingHorizontal: 20,
+  },
+  landscapeBrandText: {
+    color: AMBER,
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 12,
+  },
+  landscapeBrandSubtext: {
+    color: TEXT_MUTED,
+    fontSize: 14,
+    marginTop: 4,
+  },
+  landscapeRightPanel: {
+    width: '42%',
+    backgroundColor: CHARCOAL,
+  },
+  landscapeScrollView: {
+    flex: 1,
+  },
+  landscapeScrollContent: {
+    padding: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  titleLandscape: {
+    fontSize: 20,
+    marginBottom: 16,
+  },
+  inputLandscape: {
+    padding: 10,
+    fontSize: 14,
+  },
+  fStopDisplayLandscape: {
+    padding: 12,
+    marginBottom: 16,
+  },
+  fStopValueLandscape: {
+    fontSize: 20,
+  },
+  formatGridLandscape: {
+    marginTop: 6,
+    gap: 6,
+  },
+  formatButtonLandscape: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginRight: 6,
+    marginBottom: 6,
+    minHeight: 36,
+  },
+  formatButtonTextLandscape: {
+    fontSize: 12,
+  },
+  orientationContainerLandscape: {
+    gap: 8,
+  },
+  orientationButtonLandscape: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    minHeight: 44,
+    gap: 6,
+  },
+  orientationTextLandscape: {
+    fontSize: 13,
+  },
+  profileSectionLandscape: {
+    marginTop: 16,
+    paddingTop: 16,
+  },
+  profileToggleTextLandscape: {
+    fontSize: 14,
+    marginLeft: 8,
+  },
+  profileToggleButtonLandscape: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginTop: 12,
+    gap: 6,
+  },
+  saveButtonLandscape: {
+    padding: 10,
+    minWidth: 40,
+  },
+  profileCardLandscape: {
+    padding: 10,
+    marginBottom: 8,
+  },
+  profileNameLandscape: {
+    fontSize: 14,
+    marginBottom: 2,
+  },
+  profileDetailsLandscape: {
+    fontSize: 11,
   },
 });
