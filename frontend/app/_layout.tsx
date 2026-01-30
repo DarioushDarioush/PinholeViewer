@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, useCameraPermissions } from 'expo-camera';
@@ -40,17 +40,18 @@ export const useCameraContext = () => useContext(CameraContext);
 export default function Layout() {
   const [permission, requestPermission] = useCameraPermissions();
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
-  const [cameraKey, setCameraKey] = useState(0);
   const [filmFormat, setFilmFormat] = useState(FILM_FORMATS[2]);
   const [filmOrientation, setFilmOrientation] = useState<'landscape' | 'portrait'>('landscape');
   const cameraRef = useRef<any>(null);
+  const pathname = usePathname();
 
   const isLandscape = dimensions.width > dimensions.height;
+  const isViewfinderTab = pathname === '/' || pathname === '/index';
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setDimensions(window);
-      setCameraKey(prev => prev + 1);
+      // No camera key change needed - camera stays mounted
     });
     return () => subscription?.remove();
   }, []);
@@ -88,13 +89,22 @@ export default function Layout() {
     return { width, height };
   };
 
-  const calculateViewfinderSize = () => {
+  const calculateViewfinderSize = (forLandscape: boolean) => {
     const effectiveDims = getEffectiveDimensions();
     const filmAspectRatio = effectiveDims.width / effectiveDims.height;
     
-    // In landscape layout, camera takes ~62% of screen width
-    const availableWidth = dimensions.width * 0.60;
-    const availableHeight = dimensions.height - 60;
+    let availableWidth: number;
+    let availableHeight: number;
+    
+    if (forLandscape) {
+      // In landscape layout, camera takes ~62% of screen width
+      availableWidth = dimensions.width * 0.60;
+      availableHeight = dimensions.height - 60;
+    } else {
+      // In portrait, camera is the main area
+      availableWidth = dimensions.width - 32;
+      availableHeight = dimensions.height * 0.50;
+    }
     
     let viewfinderWidth = availableWidth * 0.85;
     let viewfinderHeight = viewfinderWidth / filmAspectRatio;
@@ -107,26 +117,36 @@ export default function Layout() {
     return { width: viewfinderWidth, height: viewfinderHeight };
   };
 
-  // Persistent Camera with Viewfinder Overlay (for landscape mode)
-  const renderPersistentCamera = () => {
-    const viewfinderSize = calculateViewfinderSize();
+  // Permission request screen
+  const renderPermissionRequest = () => (
+    <View style={styles.permissionContainer}>
+      <Ionicons name="camera-outline" size={isLandscape ? 48 : 64} color={TEXT_MUTED} />
+      <Text style={[styles.permissionTitle, isLandscape && styles.permissionTitleLandscape]}>
+        Camera Access Required
+      </Text>
+      {!isLandscape && (
+        <Text style={styles.permissionText}>Grant camera permission to use the viewfinder</Text>
+      )}
+      <TouchableOpacity
+        style={[styles.permissionButton, isLandscape && styles.permissionButtonLandscape]}
+        onPress={requestPermission}
+      >
+        <Text style={styles.permissionButtonText}>Enable Camera</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // Single persistent camera - ALWAYS mounted, never re-keyed
+  const renderCamera = () => {
+    const viewfinderSize = calculateViewfinderSize(isLandscape);
 
     if (!permission?.granted) {
-      return (
-        <View style={styles.permissionContainer}>
-          <Ionicons name="camera-outline" size={48} color={TEXT_MUTED} />
-          <Text style={styles.permissionTitle}>Camera Access Required</Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-            <Text style={styles.permissionButtonText}>Enable Camera</Text>
-          </TouchableOpacity>
-        </View>
-      );
+      return renderPermissionRequest();
     }
 
     return (
       <View style={styles.cameraContainer}>
         <CameraView
-          key={cameraKey}
           style={styles.camera}
           facing="back"
           ref={cameraRef}
@@ -202,9 +222,9 @@ export default function Layout() {
       <CameraContext.Provider value={cameraContextValue}>
         <StatusBar style="light" />
         <View style={styles.landscapeContainer}>
-          {/* LEFT: Persistent Live Camera */}
+          {/* LEFT: Persistent Live Camera - ALWAYS MOUNTED */}
           <View style={styles.landscapeLeftPanel}>
-            {renderPersistentCamera()}
+            {renderCamera()}
           </View>
           {/* RIGHT: Tab Content */}
           <View style={styles.landscapeRightPanel}>
@@ -215,11 +235,27 @@ export default function Layout() {
     );
   }
 
-  // PORTRAIT MODE: Normal tabs layout
+  // PORTRAIT MODE: Camera behind content, or full tabs for non-viewfinder screens
+  // For Viewfinder tab: Show camera with overlay
+  // For other tabs: Show normal tab content
   return (
     <CameraContext.Provider value={cameraContextValue}>
       <StatusBar style="light" />
-      {tabsComponent}
+      <View style={styles.portraitContainer}>
+        {/* Camera layer - always mounted but only visible on Viewfinder tab */}
+        {isViewfinderTab && (
+          <View style={styles.portraitCameraLayer}>
+            {renderCamera()}
+          </View>
+        )}
+        {/* Tabs layer */}
+        <View style={[
+          styles.portraitTabsLayer,
+          isViewfinderTab && styles.portraitTabsLayerOverCamera
+        ]}>
+          {tabsComponent}
+        </View>
+      </View>
     </CameraContext.Provider>
   );
 }
