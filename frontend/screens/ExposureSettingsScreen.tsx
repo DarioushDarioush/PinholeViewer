@@ -482,4 +482,61 @@ const styles = StyleSheet.create({
     fontSize: 11,
     marginTop: 1,
   },
+
+  // Filter Button Styles
+  filterButtonsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 8,
+    marginBottom: 12,
+  },
+  filterButtonsRowLandscape: {
+    gap: 4,
+    marginBottom: 8,
+  },
+  filterButton: {
+    flex: 1,
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: CHARCOAL,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    minHeight: 60,
+  },
+  filterButtonLandscape: {
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    minHeight: 48,
+  },
+  filterButtonSelected: {
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+  },
+  filterColorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginBottom: 4,
+  },
+  filterButtonText: {
+    color: TEXT_SECONDARY,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  filterButtonTextLandscape: {
+    fontSize: 10,
+  },
+  filterButtonTextSelected: {
+    color: AMBER,
+  },
+  filterStops: {
+    color: TEXT_MUTED,
+    fontSize: 10,
+    marginTop: 2,
+  },
+  filterStopsLandscape: {
+    fontSize: 9,
+  },
 });
