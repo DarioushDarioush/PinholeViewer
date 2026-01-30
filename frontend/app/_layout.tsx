@@ -236,6 +236,14 @@ export default function Layout() {
             <View style={styles.overlaySide} />
             <View style={[styles.viewfinderCutout, { width: viewfinderSize.width, height: viewfinderSize.height }]}>
               <View style={styles.viewfinderBorder} />
+              {/* Countdown display inside viewfinder */}
+              {countdownSeconds !== null && (
+                <View style={styles.countdownContainer}>
+                  <Text style={[styles.countdownText, isLandscape && styles.countdownTextLandscape]}>
+                    {countdownSeconds}
+                  </Text>
+                </View>
+              )}
             </View>
             <View style={styles.overlaySide} />
           </View>
