@@ -129,19 +129,45 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
         </View>
       </View>
 
-      {/* Red Filter Toggle */}
-      <TouchableOpacity
-        style={[styles.toggleRow, isLandscape && styles.toggleRowLandscape]}
-        onPress={() => updateSettings({ ...settings, useRedFilter: !settings.useRedFilter })}
-      >
-        <View style={[styles.checkbox, isLandscape && styles.checkboxLandscape]}>
-          {settings.useRedFilter && <Ionicons name="checkmark" size={isLandscape ? 14 : 18} color={AMBER} />}
-        </View>
-        <View style={styles.toggleText}>
-          <Text style={[styles.toggleLabel, isLandscape && styles.toggleLabelLandscape]}>Red Filter</Text>
-          <Text style={[styles.toggleNote, isLandscape && styles.toggleNoteLandscape]}>+3 stops</Text>
-        </View>
-      </TouchableOpacity>
+      {/* Filter Selection */}
+      <Text style={[styles.sectionTitle, isLandscape && styles.sectionTitleLandscape, { marginTop: isLandscape ? 8 : 16 }]}>
+        Filter
+      </Text>
+      <View style={[styles.filterButtonsRow, isLandscape && styles.filterButtonsRowLandscape]}>
+        {FILTER_OPTIONS.map((filter) => {
+          const isSelected = (settings.selectedFilter || 'None') === filter.name;
+          return (
+            <TouchableOpacity
+              key={filter.name}
+              style={[
+                styles.filterButton,
+                isLandscape && styles.filterButtonLandscape,
+                isSelected && styles.filterButtonSelected,
+                { borderColor: filter.color }
+              ]}
+              onPress={() => updateSettings({ 
+                ...settings, 
+                selectedFilter: filter.name as FilterType,
+                useRedFilter: filter.name === 'Red' // Keep backwards compatibility
+              })}
+            >
+              <View style={[styles.filterColorDot, { backgroundColor: filter.color }]} />
+              <Text style={[
+                styles.filterButtonText, 
+                isLandscape && styles.filterButtonTextLandscape,
+                isSelected && styles.filterButtonTextSelected
+              ]}>
+                {filter.name}
+              </Text>
+              {filter.stops > 0 && (
+                <Text style={[styles.filterStops, isLandscape && styles.filterStopsLandscape]}>
+                  +{filter.stops}
+                </Text>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Reciprocity Failure Toggle */}
       <TouchableOpacity
