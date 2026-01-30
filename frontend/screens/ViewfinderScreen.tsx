@@ -177,9 +177,10 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     </ScrollView>
   );
 
-  // ========== PORTRAIT LAYOUT - Camera with overlay UI ==========
+  // ========== PORTRAIT LAYOUT - UI overlay only (camera is in _layout.tsx) ==========
   const renderPortraitLayout = () => (
-    <View style={styles.container}>
+    <View style={styles.portraitOverlayContainer}>
+      {/* Header bar - positioned at top */}
       <View style={styles.headerBar}>
         <View style={styles.headerItem}>
           <Text style={styles.headerLabel}>FORMAT</Text>
@@ -206,9 +207,10 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
         </View>
       </View>
 
-      {/* Camera with viewfinder overlay */}
-      {permission?.granted ? renderCameraWithOverlay() : renderPermissionRequest()}
+      {/* Spacer - transparent area where camera shows through */}
+      <View style={styles.cameraAreaSpacer} />
 
+      {/* Exposure info at bottom */}
       {calculatedExposure && (
         <View style={styles.portraitExposureBar}>
           <Text style={styles.portraitExposureLabel}>EXPOSURE</Text>
