@@ -29,7 +29,7 @@ interface Props {
 export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
-  const [cameraKey, setCameraKey] = useState(0); // Key to force camera remount
+  const [cameraKey, setCameraKey] = useState(0);
   const cameraRef = useRef<any>(null);
 
   const isLandscape = dimensions.width > dimensions.height;
@@ -37,7 +37,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setDimensions(window);
-      // Force camera to remount when orientation changes
       setCameraKey(prev => prev + 1);
     });
     return () => subscription?.remove();
@@ -50,7 +49,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   const getEffectiveDimensions = () => {
     const { width, height } = settings.filmFormat;
     const orientation = settings.filmOrientation || 'landscape';
-    
     if (orientation === 'portrait') {
       return { width: height, height: width };
     }
@@ -60,7 +58,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   const calculateViewfinderSize = () => {
     const screenWidth = dimensions.width;
     const screenHeight = dimensions.height;
-    
     const effectiveDims = getEffectiveDimensions();
     const filmAspectRatio = effectiveDims.width / effectiveDims.height;
     
@@ -68,19 +65,18 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     let viewfinderHeight: number;
     
     if (isLandscape) {
-      // Landscape: viewfinder on RIGHT side, use ~58% of screen width
-      const availableWidth = screenWidth * 0.56;
-      const availableHeight = screenHeight - 80;
+      // Viewfinder on LEFT - use ~60% of screen width
+      const availableWidth = screenWidth * 0.58;
+      const availableHeight = screenHeight - 60;
       
-      viewfinderHeight = availableHeight * 0.85;
+      viewfinderHeight = availableHeight * 0.88;
       viewfinderWidth = viewfinderHeight * filmAspectRatio;
       
-      if (viewfinderWidth > availableWidth * 0.9) {
-        viewfinderWidth = availableWidth * 0.9;
+      if (viewfinderWidth > availableWidth * 0.92) {
+        viewfinderWidth = availableWidth * 0.92;
         viewfinderHeight = viewfinderWidth / filmAspectRatio;
       }
     } else {
-      // Portrait: viewfinder centered
       const availableWidth = screenWidth - 32;
       const availableHeight = screenHeight * 0.50;
       
@@ -147,7 +143,47 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   const filmOrientationLabel = settings.filmOrientation === 'portrait' ? 'Portrait' : 'Landscape';
   const viewfinderSize = calculateViewfinderSize();
 
-  // ========== SHARED: Info Panel Content ==========
+  // ========== Camera with Viewfinder Overlay ==========
+  const renderCameraWithOverlay = () => (
+    <View style={styles.cameraWrapper}>
+      <CameraView
+        key={cameraKey}
+        style={StyleSheet.absoluteFill}
+        facing="back"
+        ref={cameraRef}
+      />
+      <View style={StyleSheet.absoluteFill}>
+        <View style={styles.overlayTop} />
+        <View style={styles.overlayMiddle}>
+          <View style={styles.overlaySide} />
+          <View style={[styles.viewfinderFrame, { width: viewfinderSize.width, height: viewfinderSize.height }]} />
+          <View style={styles.overlaySide} />
+        </View>
+        <View style={styles.overlayBottom} />
+      </View>
+    </View>
+  );
+
+  // ========== Permission Request ==========
+  const renderPermissionRequest = () => (
+    <View style={styles.permissionContainer}>
+      <Ionicons name="camera-outline" size={isLandscape ? 48 : 64} color={TEXT_MUTED} />
+      <Text style={[styles.permissionTitle, isLandscape && styles.permissionTitleLandscape]}>
+        Camera Access Required
+      </Text>
+      {!isLandscape && (
+        <Text style={styles.permissionText}>Grant camera permission to use the viewfinder</Text>
+      )}
+      <TouchableOpacity
+        style={[styles.permissionButton, isLandscape && styles.permissionButtonLandscape]}
+        onPress={requestPermission}
+      >
+        <Text style={styles.permissionButtonText}>Enable Camera</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
+  // ========== Info Panel Content (RIGHT side in landscape) ==========
   const renderInfoPanelContent = () => (
     <ScrollView 
       style={styles.infoPanelScroll}
@@ -161,13 +197,7 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
         <Text style={styles.infoValue}>{settings.filmFormat.name}</Text>
       </View>
       
-      <TouchableOpacity 
-        style={styles.infoRow}
-        onPress={toggleOrientation}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel={`Film orientation: ${filmOrientationLabel}. Tap to toggle`}
-      >
+      <TouchableOpacity style={styles.infoRow} onPress={toggleOrientation}>
         <Text style={styles.infoLabel}>Orientation</Text>
         <View style={styles.orientationValue}>
           <Ionicons 
@@ -189,7 +219,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
         <Text style={styles.infoValue}>{settings.iso}</Text>
       </View>
 
-      {/* Exposure Display */}
       {calculatedExposure && (
         <View style={styles.exposureSection}>
           <Text style={styles.infoPanelTitle}>EXPOSURE</Text>
@@ -207,7 +236,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
         </View>
       )}
 
-      {/* Bracket Slider */}
       {calculatedExposure && (
         <View style={styles.bracketSection}>
           <Text style={styles.infoPanelTitle}>BRACKET</Text>
@@ -235,53 +263,9 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     </ScrollView>
   );
 
-  // ========== SHARED: Camera View with Overlay ==========
-  const renderCameraWithOverlay = () => (
-    <View style={styles.cameraWrapper}>
-      <CameraView
-        key={cameraKey}
-        style={StyleSheet.absoluteFill}
-        facing="back"
-        ref={cameraRef}
-      />
-      {/* Viewfinder Frame Overlay */}
-      <View style={StyleSheet.absoluteFill}>
-        <View style={styles.overlayTop} />
-        <View style={styles.overlayMiddle}>
-          <View style={styles.overlaySide} />
-          <View style={[styles.viewfinderFrame, { width: viewfinderSize.width, height: viewfinderSize.height }]} />
-          <View style={styles.overlaySide} />
-        </View>
-        <View style={styles.overlayBottom} />
-      </View>
-    </View>
-  );
-
-  // ========== SHARED: Permission Request ==========
-  const renderPermissionRequest = () => (
-    <View style={styles.permissionContainer}>
-      <Ionicons name="camera-outline" size={isLandscape ? 40 : 64} color={TEXT_MUTED} />
-      <Text style={[styles.permissionTitle, isLandscape && styles.permissionTitleLandscape]}>
-        Camera Access Required
-      </Text>
-      {!isLandscape && (
-        <Text style={styles.permissionText}>Grant camera permission to use the viewfinder</Text>
-      )}
-      <TouchableOpacity
-        style={[styles.permissionButton, isLandscape && styles.permissionButtonLandscape]}
-        onPress={requestPermission}
-        accessible={true}
-        accessibilityRole="button"
-      >
-        <Text style={styles.permissionButtonText}>Enable Camera</Text>
-      </TouchableOpacity>
-    </View>
-  );
-
   // ========== PORTRAIT LAYOUT ==========
   const renderPortraitLayout = () => (
     <View style={styles.container}>
-      {/* Header Bar */}
       <View style={styles.headerBar}>
         <View style={styles.headerItem}>
           <Text style={styles.headerLabel}>FORMAT</Text>
@@ -308,10 +292,8 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
         </View>
       </View>
 
-      {/* Camera or Permission */}
       {permission?.granted ? renderCameraWithOverlay() : renderPermissionRequest()}
 
-      {/* Exposure Display */}
       {calculatedExposure && (
         <View style={styles.portraitExposureBar}>
           <Text style={styles.portraitExposureLabel}>EXPOSURE</Text>
@@ -323,7 +305,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
         </View>
       )}
 
-      {/* Bracket Slider */}
       {calculatedExposure && (
         <View style={styles.portraitBracketBar}>
           <Text style={styles.portraitBracketLabel}>
@@ -345,22 +326,21 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     </View>
   );
 
-  // ========== LANDSCAPE LAYOUT ==========
+  // ========== LANDSCAPE LAYOUT: Viewfinder LEFT, Info Panel RIGHT ==========
   const renderLandscapeLayout = () => (
     <View style={styles.landscapeContainer}>
-      {/* LEFT: Info Panel */}
+      {/* LEFT: Camera/Viewfinder */}
       <View style={styles.landscapeLeftPanel}>
-        {renderInfoPanelContent()}
+        {permission?.granted ? renderCameraWithOverlay() : renderPermissionRequest()}
       </View>
 
-      {/* RIGHT: Camera/Viewfinder */}
+      {/* RIGHT: Info Panel */}
       <View style={styles.landscapeRightPanel}>
-        {permission?.granted ? renderCameraWithOverlay() : renderPermissionRequest()}
+        {renderInfoPanelContent()}
       </View>
     </View>
   );
 
-  // ========== MAIN RENDER ==========
   if (!permission) {
     return <View style={styles.container} />;
   }
@@ -369,13 +349,10 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
 }
 
 const styles = StyleSheet.create({
-  // ========== CONTAINER ==========
   container: {
     flex: 1,
     backgroundColor: DARK_BG,
   },
-
-  // ========== PORTRAIT HEADER ==========
   headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -412,15 +389,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-
-  // ========== CAMERA WRAPPER ==========
   cameraWrapper: {
     flex: 1,
     position: 'relative',
     backgroundColor: '#000',
   },
-
-  // ========== OVERLAY ==========
   overlayTop: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.7)',
@@ -441,8 +414,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: AMBER,
   },
-
-  // ========== PERMISSION ==========
   permissionContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -486,8 +457,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
-
-  // ========== PORTRAIT EXPOSURE BAR ==========
   portraitExposureBar: {
     backgroundColor: AMBER,
     paddingVertical: 14,
@@ -512,8 +481,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     opacity: 0.85,
   },
-
-  // ========== PORTRAIT BRACKET BAR ==========
   portraitBracketBar: {
     backgroundColor: CHARCOAL,
     paddingVertical: 12,
@@ -531,24 +498,22 @@ const styles = StyleSheet.create({
     height: 40,
   },
 
-  // ========== LANDSCAPE LAYOUT ==========
+  // LANDSCAPE: Viewfinder LEFT, Info RIGHT
   landscapeContainer: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: DARK_BG,
   },
   landscapeLeftPanel: {
-    width: '38%',
-    backgroundColor: CHARCOAL,
-    borderRightWidth: 2,
-    borderRightColor: AMBER,
-  },
-  landscapeRightPanel: {
     flex: 1,
     backgroundColor: '#000',
   },
-
-  // ========== INFO PANEL (LANDSCAPE LEFT) ==========
+  landscapeRightPanel: {
+    width: '38%',
+    backgroundColor: CHARCOAL,
+    borderLeftWidth: 2,
+    borderLeftColor: AMBER,
+  },
   infoPanelScroll: {
     flex: 1,
   },
@@ -596,8 +561,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
-
-  // ========== EXPOSURE SECTION (LANDSCAPE) ==========
   exposureSection: {
     marginTop: 8,
   },
@@ -626,8 +589,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
     opacity: 0.8,
   },
-
-  // ========== BRACKET SECTION (LANDSCAPE) ==========
   bracketSection: {
     marginTop: 8,
   },
