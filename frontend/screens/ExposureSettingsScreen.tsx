@@ -362,21 +362,10 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
 
-  // LANDSCAPE Layout
-  landscapeContainer: {
+  // LANDSCAPE Layout: Exposure Panel Only (camera is in parent)
+  landscapeExposurePanelOnly: {
     flex: 1,
-    flexDirection: 'row',
-    backgroundColor: DARK_BG,
-  },
-  landscapeLeftPanel: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  landscapeRightPanel: {
-    width: '38%',
     backgroundColor: CHARCOAL,
-    borderLeftWidth: 2,
-    borderLeftColor: AMBER,
   },
   landscapeScrollContent: {
     padding: 16,
