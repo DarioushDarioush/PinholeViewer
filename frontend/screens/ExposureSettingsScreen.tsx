@@ -183,26 +183,18 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
     </>
   );
 
-  // ========== LANDSCAPE LAYOUT: Live Camera LEFT, Settings RIGHT ==========
+  // ========== LANDSCAPE LAYOUT: Exposure Panel only (camera is in parent _layout.tsx) ==========
   if (isLandscape) {
     return (
-      <View style={styles.landscapeContainer}>
-        {/* LEFT: Live Camera/Viewfinder */}
-        <View style={styles.landscapeLeftPanel}>
-          {renderCameraWithOverlay()}
-        </View>
-
-        {/* RIGHT: Settings Panel */}
-        <View style={styles.landscapeRightPanel}>
-          <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={styles.landscapeScrollContent}
-            showsVerticalScrollIndicator={false}
-            ref={scrollRef}
-          >
-            {renderExposureContent()}
-          </ScrollView>
-        </View>
+      <View style={styles.landscapeExposurePanelOnly}>
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.landscapeScrollContent}
+          showsVerticalScrollIndicator={false}
+          ref={scrollRef}
+        >
+          {renderExposureContent()}
+        </ScrollView>
       </View>
     );
   }
