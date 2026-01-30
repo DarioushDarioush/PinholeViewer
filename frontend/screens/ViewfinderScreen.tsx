@@ -157,7 +157,11 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
       </View>
 
       {calculatedExposure && (
-        <View style={styles.exposureSection}>
+        <Pressable 
+          style={styles.exposureSection}
+          onLongPress={handleExposureLongPress}
+          delayLongPress={500}
+        >
           <Text style={styles.infoPanelTitle}>EXPOSURE</Text>
           <View style={styles.exposureBox}>
             <Text style={styles.exposureValue}>{calculatedExposure}</Text>
@@ -185,7 +189,8 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
               </View>
             )}
           </View>
-        </View>
+          <Text style={styles.longPressHint}>Long press to start timer</Text>
+        </Pressable>
       )}
 
       {calculatedExposure && (
