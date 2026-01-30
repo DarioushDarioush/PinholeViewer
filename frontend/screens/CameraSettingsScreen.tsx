@@ -417,6 +417,38 @@ const styles = StyleSheet.create({
     color: DARK_BG,
     fontWeight: 'bold',
   },
+  orientationContainer: {
+    flexDirection: 'row',
+    marginTop: 8,
+    gap: 12,
+  },
+  orientationButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: CHARCOAL,
+    borderWidth: 1,
+    borderColor: '#333',
+    borderRadius: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    minHeight: 56, // WCAG minimum touch target
+    gap: 10,
+  },
+  orientationButtonActive: {
+    backgroundColor: AMBER,
+    borderColor: AMBER,
+  },
+  orientationText: {
+    color: TEXT_SECONDARY,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  orientationTextActive: {
+    color: DARK_BG,
+    fontWeight: '700',
+  },
   profileSection: {
     marginTop: 32,
     paddingTop: 24,
