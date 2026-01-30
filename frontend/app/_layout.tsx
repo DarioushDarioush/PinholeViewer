@@ -235,29 +235,7 @@ export default function Layout() {
     );
   }
 
-  // PORTRAIT MODE: Different rendering based on active tab
-  // For Viewfinder tab: Camera fills main area, UI overlays on top
-  // For other tabs: Normal scrollable content
-  if (isViewfinderTab) {
-    // Portrait Viewfinder: Camera as main view with overlay UI
-    return (
-      <CameraContext.Provider value={cameraContextValue}>
-        <StatusBar style="light" />
-        <View style={styles.portraitViewfinderContainer}>
-          {/* Camera fills the background */}
-          <View style={styles.portraitCameraFill}>
-            {renderCamera()}
-          </View>
-          {/* Tab bar at bottom - positioned absolutely */}
-          <View style={styles.portraitTabBarContainer}>
-            {tabsComponent}
-          </View>
-        </View>
-      </CameraContext.Provider>
-    );
-  }
-
-  // Portrait Mode for Camera/Exposure tabs: Normal tabs layout (no camera)
+  // PORTRAIT MODE: Standard tabs - ViewfinderScreen will render its own camera
   return (
     <CameraContext.Provider value={cameraContextValue}>
       <StatusBar style="light" />
