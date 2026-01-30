@@ -137,6 +137,22 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
 
   return (
     <View style={styles.container}>
+      {/* Info Header Bar */}
+      <View style={styles.headerBar}>
+        <View style={styles.headerItem}>
+          <Text style={styles.headerLabel}>Format</Text>
+          <Text style={styles.headerValue}>{settings.filmFormat.name}</Text>
+        </View>
+        <View style={styles.headerItem}>
+          <Text style={styles.headerLabel}>F-Stop</Text>
+          <Text style={styles.headerValue}>f/{calculateFStop()}</Text>
+        </View>
+        <View style={styles.headerItem}>
+          <Text style={styles.headerLabel}>ISO</Text>
+          <Text style={styles.headerValue}>{settings.iso}</Text>
+        </View>
+      </View>
+
       {/* Camera View */}
       <View style={styles.cameraContainer}>
         <CameraView
