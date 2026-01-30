@@ -141,14 +141,19 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
           </View>
 
           {/* F-Stop Display */}
-          <View style={styles.fStopDisplay}>
+          <View 
+            style={styles.fStopDisplay}
+            accessible={true}
+            accessibilityRole="text"
+            accessibilityLabel={`F-Stop: f/${calculateFStop()}`}
+          >
             <Text style={styles.fStopLabel}>F-Stop:</Text>
             <Text style={styles.fStopValue}>f/{calculateFStop()}</Text>
           </View>
 
           {/* Film Format */}
           <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel}>Film Format</Text>
+            <Text style={styles.settingLabel} accessibilityRole="header">Film Format</Text>
             <View style={styles.formatGrid}>
               {FILM_FORMATS.map((format) => (
                 <TouchableOpacity
@@ -158,6 +163,11 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
                     settings.filmFormat.name === format.name && styles.formatButtonActive,
                   ]}
                   onPress={() => updateSettings({ ...settings, filmFormat: format })}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: settings.filmFormat.name === format.name }}
+                  accessibilityLabel={`${format.name} film format`}
+                  accessibilityHint={settings.filmFormat.name === format.name ? 'Currently selected' : 'Tap to select'}
                 >
                   <Text
                     style={[
@@ -172,9 +182,66 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
             </View>
           </View>
 
+          {/* Film Orientation */}
+          <View style={styles.settingGroup}>
+            <Text style={styles.settingLabel} accessibilityRole="header">Film Orientation</Text>
+            <View style={styles.orientationContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.orientationButton,
+                  settings.filmOrientation === 'landscape' && styles.orientationButtonActive,
+                ]}
+                onPress={() => updateSettings({ ...settings, filmOrientation: 'landscape' })}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityState={{ selected: settings.filmOrientation === 'landscape' }}
+                accessibilityLabel="Landscape orientation"
+              >
+                <Ionicons 
+                  name="phone-landscape-outline" 
+                  size={28} 
+                  color={settings.filmOrientation === 'landscape' ? DARK_BG : TEXT_SECONDARY} 
+                />
+                <Text
+                  style={[
+                    styles.orientationText,
+                    settings.filmOrientation === 'landscape' && styles.orientationTextActive,
+                  ]}
+                >
+                  Landscape
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.orientationButton,
+                  settings.filmOrientation === 'portrait' && styles.orientationButtonActive,
+                ]}
+                onPress={() => updateSettings({ ...settings, filmOrientation: 'portrait' })}
+                accessible={true}
+                accessibilityRole="button"
+                accessibilityState={{ selected: settings.filmOrientation === 'portrait' }}
+                accessibilityLabel="Portrait orientation"
+              >
+                <Ionicons 
+                  name="phone-portrait-outline" 
+                  size={28} 
+                  color={settings.filmOrientation === 'portrait' ? DARK_BG : TEXT_SECONDARY} 
+                />
+                <Text
+                  style={[
+                    styles.orientationText,
+                    settings.filmOrientation === 'portrait' && styles.orientationTextActive,
+                  ]}
+                >
+                  Portrait
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
           {/* ISO */}
           <View style={styles.settingGroup}>
-            <Text style={styles.settingLabel}>ISO</Text>
+            <Text style={styles.settingLabel} accessibilityRole="header">ISO</Text>
             <View style={styles.formatGrid}>
               {ISO_VALUES.map((isoValue) => (
                 <TouchableOpacity
@@ -184,6 +251,10 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
                     settings.iso === isoValue && styles.formatButtonActive,
                   ]}
                   onPress={() => updateSettings({ ...settings, iso: isoValue })}
+                  accessible={true}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: settings.iso === isoValue }}
+                  accessibilityLabel={`ISO ${isoValue}`}
                 >
                   <Text
                     style={[
