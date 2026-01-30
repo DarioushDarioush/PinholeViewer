@@ -56,8 +56,15 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
       exposureTime = Math.pow(exposureTime, 1.3);
     }
     
-    if (settings.useRedFilter) {
-      exposureTime *= 8;
+    // Apply filter compensation (new system)
+    const selectedFilter = settings.selectedFilter || 'None';
+    const filterOption = FILTER_OPTIONS.find(f => f.name === selectedFilter);
+    if (filterOption && filterOption.stops > 0) {
+      exposureTime *= Math.pow(2, filterOption.stops);
+    }
+    // Backwards compatibility: if useRedFilter is true and no new filter selected
+    else if (settings.useRedFilter && selectedFilter === 'None') {
+      exposureTime *= 8; // +3 stops
     }
     
     const bracketMultiplier = Math.pow(2, settings.bracketStops);
