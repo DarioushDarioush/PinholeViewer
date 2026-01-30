@@ -679,8 +679,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   landscapeScrollContent: {
-    padding: 16,
-    paddingTop: 12,
+    padding: 20,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
   landscapeInfoSection: {
     marginBottom: 20,
