@@ -9,6 +9,7 @@ export default function Index() {
     focalLength: 50,
     pinholeSize: 0.3,
     filmFormat: FILM_FORMATS[2],
+    filmOrientation: 'landscape',
     iso: 100,
     selectedCondition: null,
     useRedFilter: false,
