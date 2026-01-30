@@ -6,7 +6,7 @@ import {
   Dimensions,
   Platform,
   TouchableOpacity,
-  AccessibilityInfo,
+  ScrollView,
 } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import Slider from '@react-native-community/slider';
@@ -15,12 +15,11 @@ import { AppSettings, LIGHTING_CONDITIONS, FilmOrientation } from '../types';
 
 // WCAG AA compliant colors - minimum 4.5:1 contrast ratio
 const AMBER = '#F59E0B';
-const AMBER_DARK = '#D97706'; // For better contrast on light backgrounds
 const DARK_BG = '#0a0a0a';
 const CHARCOAL = '#1a1a1a';
-const TEXT_PRIMARY = '#FFFFFF'; // 21:1 contrast on dark
-const TEXT_SECONDARY = '#B3B3B3'; // 7:1 contrast on dark
-const TEXT_MUTED = '#808080'; // 4.5:1 contrast on dark
+const TEXT_PRIMARY = '#FFFFFF';
+const TEXT_SECONDARY = '#B3B3B3';
+const TEXT_MUTED = '#808080';
 
 interface Props {
   settings: AppSettings;
@@ -32,6 +31,9 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
   const cameraRef = useRef<any>(null);
 
+  // Detect device orientation (landscape vs portrait)
+  const isDeviceLandscape = dimensions.width > dimensions.height;
+
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setDimensions(window);
@@ -39,12 +41,10 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     return () => subscription?.remove();
   }, []);
 
-  // Calculate f-stop
   const calculateFStop = () => {
     return (settings.focalLength / settings.pinholeSize).toFixed(1);
   };
 
-  // Get effective dimensions based on orientation
   const getEffectiveDimensions = () => {
     const { width, height } = settings.filmFormat;
     const orientation = settings.filmOrientation || 'landscape';
@@ -55,11 +55,10 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     return { width, height };
   };
 
-  // Calculate viewfinder size with orientation support
+  // Calculate viewfinder size based on device orientation
   const calculateViewfinderSize = () => {
     const screenWidth = dimensions.width;
     const screenHeight = dimensions.height;
-    const isScreenLandscape = screenWidth > screenHeight;
     
     const effectiveDims = getEffectiveDimensions();
     const filmAspectRatio = effectiveDims.width / effectiveDims.height;
@@ -67,18 +66,22 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     let viewfinderWidth: number;
     let viewfinderHeight: number;
     
-    if (isScreenLandscape) {
-      const availableHeight = screenHeight - 200;
-      viewfinderHeight = availableHeight * 0.85;
+    if (isDeviceLandscape) {
+      // Landscape device: viewfinder on left, use ~60% of screen width
+      const availableWidth = screenWidth * 0.58;
+      const availableHeight = screenHeight - 20;
+      
+      viewfinderHeight = availableHeight * 0.92;
       viewfinderWidth = viewfinderHeight * filmAspectRatio;
       
-      if (viewfinderWidth > screenWidth * 0.85) {
-        viewfinderWidth = screenWidth * 0.85;
+      if (viewfinderWidth > availableWidth) {
+        viewfinderWidth = availableWidth;
         viewfinderHeight = viewfinderWidth / filmAspectRatio;
       }
     } else {
-      const availableWidth = screenWidth - 48;
-      const availableHeight = screenHeight * 0.55;
+      // Portrait device: viewfinder on top
+      const availableWidth = screenWidth - 32;
+      const availableHeight = screenHeight * 0.50;
       
       viewfinderWidth = availableWidth * 0.95;
       viewfinderHeight = viewfinderWidth / filmAspectRatio;
@@ -95,7 +98,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     };
   };
 
-  // Calculate exposure with bracketing
   const calculateExposure = () => {
     if (!settings.selectedCondition) return null;
     
@@ -108,17 +110,14 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     const baseExposure = 1 / settings.iso;
     let exposureTime = baseExposure * Math.pow(actualFStop / referenceFStop, 2);
     
-    // Apply reciprocity failure if enabled
     if (settings.useReciprocityFailure && exposureTime > 1) {
       exposureTime = Math.pow(exposureTime, 1.3);
     }
     
-    // Apply red filter
     if (settings.useRedFilter) {
       exposureTime *= 8;
     }
     
-    // Apply bracketing
     const bracketMultiplier = Math.pow(2, settings.bracketStops);
     exposureTime *= bracketMultiplier;
     
@@ -146,32 +145,24 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     updateSettings({ ...settings, filmOrientation: newOrientation });
   };
 
-  // Calculate exposure before permission checks
   const calculatedExposure = calculateExposure();
   const effectiveDims = getEffectiveDimensions();
-  const orientationLabel = settings.filmOrientation === 'portrait' ? 'Portrait' : 'Landscape';
+  const filmOrientationLabel = settings.filmOrientation === 'portrait' ? 'Portrait' : 'Landscape';
 
-  // Render header bar (reusable)
-  const renderHeaderBar = () => (
-    <View 
-      style={styles.headerBar}
-      accessible={true}
-      accessibilityRole="toolbar"
-      accessibilityLabel="Camera settings summary"
-    >
+  // ============ PORTRAIT MODE COMPONENTS ============
+  
+  const renderPortraitHeaderBar = () => (
+    <View style={styles.headerBar} accessible={true} accessibilityRole="toolbar">
       <View style={styles.headerItem}>
-        <Text style={styles.headerLabel} accessibilityRole="text">FORMAT</Text>
-        <Text style={styles.headerValue} accessibilityLabel={`Film format: ${settings.filmFormat.name}`}>
-          {settings.filmFormat.name}
-        </Text>
+        <Text style={styles.headerLabel}>FORMAT</Text>
+        <Text style={styles.headerValue}>{settings.filmFormat.name}</Text>
       </View>
       <TouchableOpacity 
         style={styles.headerItem}
         onPress={toggleOrientation}
         accessible={true}
         accessibilityRole="button"
-        accessibilityLabel={`Orientation: ${orientationLabel}. Tap to toggle`}
-        accessibilityHint="Switches between landscape and portrait orientation"
+        accessibilityLabel={`Film orientation: ${filmOrientationLabel}. Tap to toggle`}
         hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
       >
         <Text style={styles.headerLabel}>ORIENTATION</Text>
@@ -181,35 +172,25 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
             size={16} 
             color={AMBER} 
           />
-          <Text style={styles.headerValueSmall}>{orientationLabel}</Text>
+          <Text style={styles.headerValueSmall}>{filmOrientationLabel}</Text>
         </View>
       </TouchableOpacity>
       <View style={styles.headerItem}>
-        <Text style={styles.headerLabel} accessibilityRole="text">F-STOP</Text>
-        <Text style={styles.headerValue} accessibilityLabel={`F-stop: f/${calculateFStop()}`}>
-          f/{calculateFStop()}
-        </Text>
+        <Text style={styles.headerLabel}>F-STOP</Text>
+        <Text style={styles.headerValue}>f/{calculateFStop()}</Text>
       </View>
       <View style={styles.headerItem}>
-        <Text style={styles.headerLabel} accessibilityRole="text">ISO</Text>
-        <Text style={styles.headerValue} accessibilityLabel={`ISO: ${settings.iso}`}>
-          {settings.iso}
-        </Text>
+        <Text style={styles.headerLabel}>ISO</Text>
+        <Text style={styles.headerValue}>{settings.iso}</Text>
       </View>
     </View>
   );
 
-  // Render exposure display (reusable)
-  const renderExposureDisplay = () => {
+  const renderPortraitExposureDisplay = () => {
     if (!calculatedExposure) return null;
     
     return (
-      <View 
-        style={styles.exposureContainer}
-        accessible={true}
-        accessibilityRole="text"
-        accessibilityLabel={`Calculated exposure: ${calculatedExposure}. Lighting condition: ${settings.selectedCondition}${settings.bracketStops !== 0 ? `. Bracket: ${settings.bracketStops > 0 ? 'plus' : 'minus'} ${Math.abs(settings.bracketStops)} stops` : ''}`}
-      >
+      <View style={styles.exposureContainer} accessible={true} accessibilityRole="text">
         <Text style={styles.exposureLabel}>CALCULATED EXPOSURE</Text>
         <Text style={styles.exposureValue}>{calculatedExposure}</Text>
         <Text style={styles.exposureCondition}>
@@ -221,18 +202,11 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     );
   };
 
-  // Render bracket slider
-  const renderBracketSlider = () => {
+  const renderPortraitBracketSlider = () => {
     if (!calculatedExposure) return null;
     
     return (
-      <View 
-        style={styles.bracketContainer}
-        accessible={true}
-        accessibilityRole="adjustable"
-        accessibilityLabel={`Exposure bracket: ${settings.bracketStops > 0 ? 'plus' : ''}${settings.bracketStops} stops`}
-        accessibilityHint="Swipe up or down to adjust bracket stops"
-      >
+      <View style={styles.bracketContainer} accessible={true} accessibilityRole="adjustable">
         <Text style={styles.bracketLabel}>
           Bracket: {settings.bracketStops > 0 ? '+' : ''}{settings.bracketStops} stops
         </Text>
@@ -246,16 +220,12 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
           minimumTrackTintColor={AMBER}
           maximumTrackTintColor={TEXT_MUTED}
           thumbTintColor={AMBER}
-          accessibilityLabel="Bracket stops slider"
         />
-        <View style={styles.bracketMarks} accessibilityElementsHidden={true}>
+        <View style={styles.bracketMarks}>
           {[-3, -2, -1, 0, 1, 2, 3].map((mark) => (
             <Text 
               key={mark} 
-              style={[
-                styles.bracketMark,
-                settings.bracketStops === mark && styles.bracketMarkActive
-              ]}
+              style={[styles.bracketMark, settings.bracketStops === mark && styles.bracketMarkActive]}
             >
               {mark > 0 ? `+${mark}` : mark}
             </Text>
@@ -265,46 +235,201 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     );
   };
 
+  // ============ LANDSCAPE MODE COMPONENTS ============
+
+  const renderLandscapeInfoPanel = () => (
+    <View style={styles.landscapeInfoPanel}>
+      <ScrollView 
+        style={styles.landscapeScrollView}
+        contentContainerStyle={styles.landscapeScrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Settings Info */}
+        <View style={styles.landscapeInfoSection}>
+          <Text style={styles.landscapeSectionTitle}>CAMERA SETTINGS</Text>
+          
+          <View style={styles.landscapeInfoRow}>
+            <Text style={styles.landscapeInfoLabel}>Format</Text>
+            <Text style={styles.landscapeInfoValue}>{settings.filmFormat.name}</Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.landscapeInfoRow}
+            onPress={toggleOrientation}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel={`Film orientation: ${filmOrientationLabel}. Tap to toggle`}
+          >
+            <Text style={styles.landscapeInfoLabel}>Orientation</Text>
+            <View style={styles.landscapeOrientationValue}>
+              <Ionicons 
+                name={settings.filmOrientation === 'portrait' ? 'phone-portrait-outline' : 'phone-landscape-outline'} 
+                size={18} 
+                color={AMBER} 
+              />
+              <Text style={styles.landscapeInfoValue}>{filmOrientationLabel}</Text>
+            </View>
+          </TouchableOpacity>
+          
+          <View style={styles.landscapeInfoRow}>
+            <Text style={styles.landscapeInfoLabel}>F-Stop</Text>
+            <Text style={styles.landscapeInfoValueLarge}>f/{calculateFStop()}</Text>
+          </View>
+          
+          <View style={styles.landscapeInfoRow}>
+            <Text style={styles.landscapeInfoLabel}>ISO</Text>
+            <Text style={styles.landscapeInfoValue}>{settings.iso}</Text>
+          </View>
+        </View>
+
+        {/* Exposure Display */}
+        {calculatedExposure && (
+          <View style={styles.landscapeExposureSection}>
+            <Text style={styles.landscapeSectionTitle}>EXPOSURE</Text>
+            <View style={styles.landscapeExposureBox}>
+              <Text style={styles.landscapeExposureValue}>{calculatedExposure}</Text>
+              <Text style={styles.landscapeExposureCondition}>
+                {settings.selectedCondition}
+              </Text>
+              {(settings.bracketStops !== 0 || settings.useRedFilter) && (
+                <Text style={styles.landscapeExposureDetails}>
+                  {settings.bracketStops !== 0 && `${settings.bracketStops > 0 ? '+' : ''}${settings.bracketStops} stops`}
+                  {settings.bracketStops !== 0 && settings.useRedFilter && ' • '}
+                  {settings.useRedFilter && 'Red Filter'}
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
+        {/* Bracket Slider */}
+        {calculatedExposure && (
+          <View style={styles.landscapeBracketSection}>
+            <Text style={styles.landscapeSectionTitle}>BRACKET</Text>
+            <Text style={styles.landscapeBracketValue}>
+              {settings.bracketStops > 0 ? '+' : ''}{settings.bracketStops} stops
+            </Text>
+            <Slider
+              style={styles.landscapeSlider}
+              minimumValue={-3}
+              maximumValue={3}
+              step={1}
+              value={settings.bracketStops}
+              onValueChange={handleBracketChange}
+              minimumTrackTintColor={AMBER}
+              maximumTrackTintColor={TEXT_MUTED}
+              thumbTintColor={AMBER}
+            />
+            <View style={styles.landscapeBracketMarks}>
+              <Text style={[styles.landscapeBracketMark, settings.bracketStops === -3 && styles.bracketMarkActive]}>-3</Text>
+              <Text style={[styles.landscapeBracketMark, settings.bracketStops === 0 && styles.bracketMarkActive]}>0</Text>
+              <Text style={[styles.landscapeBracketMark, settings.bracketStops === 3 && styles.bracketMarkActive]}>+3</Text>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+    </View>
+  );
+
+  // ============ PERMISSION SCREENS ============
+
   if (!permission) {
     return <View style={styles.container} />;
   }
 
   if (!permission.granted) {
-    return (
-      <View style={styles.container}>
-        {renderHeaderBar()}
-        <View style={styles.permissionContainer}>
-          <Ionicons name="camera-outline" size={64} color={TEXT_MUTED} />
-          <Text 
-            style={styles.permissionTitle}
-            accessibilityRole="header"
-          >
-            Camera Access Required
-          </Text>
-          <Text style={styles.permissionText}>
-            Grant camera permission to use the viewfinder
-          </Text>
-          <TouchableOpacity
-            style={styles.permissionButton}
-            onPress={requestPermission}
-            accessible={true}
-            accessibilityRole="button"
-            accessibilityLabel="Enable camera access"
-          >
-            <Text style={styles.permissionButtonText}>Enable Camera</Text>
-          </TouchableOpacity>
-          {renderExposureDisplay()}
+    if (isDeviceLandscape) {
+      // Landscape permission screen
+      return (
+        <View style={styles.landscapeContainer}>
+          <View style={styles.landscapeViewfinderArea}>
+            <View style={styles.permissionContainerLandscape}>
+              <Ionicons name="camera-outline" size={48} color={TEXT_MUTED} />
+              <Text style={styles.permissionTitleLandscape}>Camera Access Required</Text>
+              <TouchableOpacity
+                style={styles.permissionButtonLandscape}
+                onPress={requestPermission}
+                accessible={true}
+                accessibilityRole="button"
+              >
+                <Text style={styles.permissionButtonText}>Enable Camera</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+          {renderLandscapeInfoPanel()}
         </View>
-        {renderBracketSlider()}
-      </View>
-    );
+      );
+    } else {
+      // Portrait permission screen
+      return (
+        <View style={styles.container}>
+          {renderPortraitHeaderBar()}
+          <View style={styles.permissionContainer}>
+            <Ionicons name="camera-outline" size={64} color={TEXT_MUTED} />
+            <Text style={styles.permissionTitle}>Camera Access Required</Text>
+            <Text style={styles.permissionText}>Grant camera permission to use the viewfinder</Text>
+            <TouchableOpacity
+              style={styles.permissionButton}
+              onPress={requestPermission}
+              accessible={true}
+              accessibilityRole="button"
+            >
+              <Text style={styles.permissionButtonText}>Enable Camera</Text>
+            </TouchableOpacity>
+            {renderPortraitExposureDisplay()}
+          </View>
+          {renderPortraitBracketSlider()}
+        </View>
+      );
+    }
   }
 
   const viewfinderSize = calculateViewfinderSize();
 
+  // ============ LANDSCAPE LAYOUT ============
+  if (isDeviceLandscape) {
+    return (
+      <View style={styles.landscapeContainer}>
+        {/* Left: Camera/Viewfinder - Unobstructed */}
+        <View style={styles.landscapeViewfinderArea}>
+          <CameraView
+            style={styles.landscapeCamera}
+            facing="back"
+            ref={cameraRef}
+          />
+          {/* Viewfinder Frame Overlay */}
+          <View style={styles.landscapeOverlay} pointerEvents="none">
+            <View style={styles.landscapeGreyTop} />
+            <View style={styles.landscapeMiddleRow}>
+              <View style={styles.landscapeGreySide} />
+              <View
+                style={[
+                  styles.viewfinder,
+                  {
+                    width: viewfinderSize.width,
+                    height: viewfinderSize.height,
+                  },
+                ]}
+                accessible={true}
+                accessibilityRole="image"
+                accessibilityLabel={`Viewfinder: ${settings.filmFormat.name} ${filmOrientationLabel}`}
+              />
+              <View style={styles.landscapeGreySide} />
+            </View>
+            <View style={styles.landscapeGreyBottom} />
+          </View>
+        </View>
+
+        {/* Right: Info Panel */}
+        {renderLandscapeInfoPanel()}
+      </View>
+    );
+  }
+
+  // ============ PORTRAIT LAYOUT ============
   return (
     <View style={styles.container}>
-      {renderHeaderBar()}
+      {renderPortraitHeaderBar()}
 
       {/* Camera View with Viewfinder */}
       <View style={styles.cameraContainer}>
@@ -329,7 +454,7 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
               ]}
               accessible={true}
               accessibilityRole="image"
-              accessibilityLabel={`Viewfinder showing ${settings.filmFormat.name} format in ${orientationLabel} orientation. Aspect ratio ${effectiveDims.width}:${effectiveDims.height}`}
+              accessibilityLabel={`Viewfinder: ${settings.filmFormat.name} ${filmOrientationLabel}`}
             />
             <View style={styles.greyArea} />
           </View>
@@ -338,19 +463,26 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
       </View>
 
       {/* Exposure Display - Below Viewfinder */}
-      {renderExposureDisplay()}
+      {renderPortraitExposureDisplay()}
 
       {/* Bracket Slider */}
-      {renderBracketSlider()}
+      {renderPortraitBracketSlider()}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // ============ SHARED STYLES ============
   container: {
     flex: 1,
     backgroundColor: DARK_BG,
   },
+  viewfinder: {
+    borderWidth: 3,
+    borderColor: AMBER,
+  },
+
+  // ============ PORTRAIT STYLES ============
   headerBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -406,10 +538,6 @@ const styles = StyleSheet.create({
   middleSection: {
     flexDirection: 'row',
   },
-  viewfinder: {
-    borderWidth: 3,
-    borderColor: AMBER,
-  },
   exposureContainer: {
     backgroundColor: AMBER,
     paddingVertical: 16,
@@ -452,7 +580,7 @@ const styles = StyleSheet.create({
   },
   slider: {
     width: '100%',
-    height: 44, // WCAG minimum touch target
+    height: 44,
   },
   bracketMarks: {
     flexDirection: 'row',
@@ -498,7 +626,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 32,
     minWidth: 200,
-    minHeight: 48, // WCAG minimum touch target
+    minHeight: 48,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -506,5 +634,169 @@ const styles = StyleSheet.create({
     color: DARK_BG,
     fontSize: 17,
     fontWeight: '700',
+  },
+
+  // ============ LANDSCAPE STYLES ============
+  landscapeContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: DARK_BG,
+  },
+  landscapeViewfinderArea: {
+    flex: 1,
+    position: 'relative',
+    borderRightWidth: 2,
+    borderRightColor: AMBER,
+  },
+  landscapeCamera: {
+    flex: 1,
+  },
+  landscapeOverlay: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  landscapeGreyTop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  landscapeMiddleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  landscapeGreySide: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  landscapeGreyBottom: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  landscapeInfoPanel: {
+    width: '38%',
+    backgroundColor: CHARCOAL,
+  },
+  landscapeScrollView: {
+    flex: 1,
+  },
+  landscapeScrollContent: {
+    padding: 16,
+    paddingTop: 12,
+  },
+  landscapeInfoSection: {
+    marginBottom: 20,
+  },
+  landscapeSectionTitle: {
+    color: TEXT_MUTED,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  landscapeInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(128, 128, 128, 0.3)',
+    minHeight: 44,
+  },
+  landscapeInfoLabel: {
+    color: TEXT_SECONDARY,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  landscapeInfoValue: {
+    color: AMBER,
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  landscapeInfoValueLarge: {
+    color: AMBER,
+    fontSize: 20,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  landscapeOrientationValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  landscapeExposureSection: {
+    marginBottom: 20,
+  },
+  landscapeExposureBox: {
+    backgroundColor: AMBER,
+    borderRadius: 10,
+    padding: 16,
+    alignItems: 'center',
+  },
+  landscapeExposureValue: {
+    color: DARK_BG,
+    fontSize: 32,
+    fontWeight: '800',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  landscapeExposureCondition: {
+    color: DARK_BG,
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  landscapeExposureDetails: {
+    color: DARK_BG,
+    fontSize: 11,
+    fontWeight: '500',
+    marginTop: 4,
+    opacity: 0.8,
+  },
+  landscapeBracketSection: {
+    marginBottom: 16,
+  },
+  landscapeBracketValue: {
+    color: TEXT_PRIMARY,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  landscapeSlider: {
+    width: '100%',
+    height: 44,
+  },
+  landscapeBracketMarks: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+    paddingHorizontal: 4,
+  },
+  landscapeBracketMark: {
+    color: TEXT_MUTED,
+    fontSize: 12,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  permissionContainerLandscape: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: DARK_BG,
+  },
+  permissionTitleLandscape: {
+    color: TEXT_PRIMARY,
+    fontSize: 18,
+    fontWeight: '700',
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  permissionButtonLandscape: {
+    backgroundColor: AMBER,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    minHeight: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
