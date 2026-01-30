@@ -45,6 +45,7 @@ export default function Index() {
           // Ensure filmFormat is properly restored
           filmFormat: parsedSettings.filmFormat || prev.filmFormat,
           filmOrientation: parsedSettings.filmOrientation || 'landscape',
+          selectedFilter: parsedSettings.selectedFilter || 'None',
         }));
       }
     } catch (error) {
