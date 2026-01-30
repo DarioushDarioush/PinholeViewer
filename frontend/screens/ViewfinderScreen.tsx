@@ -506,21 +506,10 @@ const styles = StyleSheet.create({
     height: 40,
   },
 
-  // LANDSCAPE Layout: Viewfinder LEFT, Info RIGHT
-  landscapeContainer: {
+  // LANDSCAPE Layout: Info Panel Only (camera is in parent)
+  landscapeInfoPanelOnly: {
     flex: 1,
-    flexDirection: 'row',
-    backgroundColor: DARK_BG,
-  },
-  landscapeLeftPanel: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  landscapeRightPanel: {
-    width: '38%',
     backgroundColor: CHARCOAL,
-    borderLeftWidth: 2,
-    borderLeftColor: AMBER,
   },
   
   // Info Panel (Landscape Right)
