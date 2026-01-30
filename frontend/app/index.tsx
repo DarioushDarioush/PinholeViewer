@@ -1,20 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Tabs } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Import screens
-import ViewfinderScreen from '../screens/ViewfinderScreen';
-import CameraSettingsScreen from '../screens/CameraSettingsScreen';
-import ExposureSettingsScreen from '../screens/ExposureSettingsScreen';
-
 const AMBER = '#F59E0B';
 const DARK_BG = '#0a0a0a';
-
-const Tab = createBottomTabNavigator();
 
 // Film formats in mm
 export const FILM_FORMATS = [
@@ -50,118 +42,50 @@ export interface AppSettings {
   bracketStops: number;
 }
 
-export default function Index() {
-  const [settings, setSettings] = useState<AppSettings>({
-    focalLength: 50,
-    pinholeSize: 0.3,
-    filmFormat: FILM_FORMATS[2], // 6x6 default
-    iso: 100,
-    selectedCondition: null,
-    useRedFilter: false,
-    useReciprocityFailure: true,
-    bracketStops: 0,
-  });
-
-  useEffect(() => {
-    loadSettings();
-  }, []);
-
-  const loadSettings = async () => {
-    try {
-      const stored = await AsyncStorage.getItem('app_settings');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        setSettings({ ...settings, ...parsed });
-      }
-    } catch (error) {
-      console.error('Error loading settings:', error);
-    }
-  };
-
-  const saveSettings = async (newSettings: AppSettings) => {
-    try {
-      setSettings(newSettings);
-      await AsyncStorage.setItem('app_settings', JSON.stringify(newSettings));
-    } catch (error) {
-      console.error('Error saving settings:', error);
-    }
-  };
-
+export default function Layout() {
   return (
-    <View style={styles.container}>
+    <>
       <StatusBar style="light" />
-      <NavigationContainer independent={true}>
-        <Tab.Navigator
-          screenOptions={{
-            tabBarStyle: {
-              backgroundColor: DARK_BG,
-              borderTopColor: AMBER,
-              borderTopWidth: 1,
-            },
-            tabBarActiveTintColor: AMBER,
-            tabBarInactiveTintColor: '#666',
-            headerShown: false,
+      <Tabs
+        screenOptions={{
+          tabBarStyle: {
+            backgroundColor: DARK_BG,
+            borderTopColor: AMBER,
+            borderTopWidth: 1,
+          },
+          tabBarActiveTintColor: AMBER,
+          tabBarInactiveTintColor: '#666',
+          headerShown: false,
+        }}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Viewfinder',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="camera-outline" size={size} color={color} />
+            ),
           }}
-        >
-          <Tab.Screen
-            name="Viewfinder"
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="camera-outline" size={size} color={color} />
-              ),
-            }}
-          >
-            {(props) => (
-              <ViewfinderScreen
-                {...props}
-                settings={settings}
-                updateSettings={saveSettings}
-              />
-            )}
-          </Tab.Screen>
-
-          <Tab.Screen
-            name="Camera"
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="settings-outline" size={size} color={color} />
-              ),
-            }}
-          >
-            {(props) => (
-              <CameraSettingsScreen
-                {...props}
-                settings={settings}
-                updateSettings={saveSettings}
-              />
-            )}
-          </Tab.Screen>
-
-          <Tab.Screen
-            name="Exposure"
-            options={{
-              tabBarIcon: ({ color, size }) => (
-                <Ionicons name="sunny-outline" size={size} color={color} />
-              ),
-            }}
-          >
-            {(props) => (
-              <ExposureSettingsScreen
-                {...props}
-                settings={settings}
-                updateSettings={saveSettings}
-              />
-            )}
-          </Tab.Screen>
-        </Tab.Navigator>
-      </NavigationContainer>
-    </View>
+        />
+        <Tabs.Screen
+          name="camera"
+          options={{
+            title: 'Camera',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="settings-outline" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="exposure"
+          options={{
+            title: 'Exposure',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="sunny-outline" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: DARK_BG,
-  },
-});
