@@ -13,6 +13,7 @@ export default function Index() {
     iso: 100,
     selectedCondition: null,
     useRedFilter: false,
+    selectedFilter: 'None',
     useReciprocityFailure: true,
     bracketStops: 0,
   });
