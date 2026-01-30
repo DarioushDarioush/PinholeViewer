@@ -327,16 +327,6 @@ const styles = StyleSheet.create({
     backgroundColor: DARK_BG,
   },
   
-  // Portrait Overlay Container - transparent to show camera behind
-  portraitOverlayContainer: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  cameraAreaSpacer: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  
   // Header Bar (Portrait)
   headerBar: {
     flexDirection: 'row',
