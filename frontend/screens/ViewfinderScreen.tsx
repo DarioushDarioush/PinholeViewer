@@ -363,6 +363,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     opacity: 0.85,
   },
+  portraitModifiersRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 8,
+  },
+  portraitModifierBadge: {
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  reciprocityBadge: {
+    backgroundColor: 'rgba(0,0,0,0.25)',
+  },
+  portraitModifierText: {
+    color: DARK_BG,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   
   // Portrait Bracket Bar
   portraitBracketBar: {
