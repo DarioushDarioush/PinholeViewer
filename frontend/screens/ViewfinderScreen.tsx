@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
 } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import Slider from '@react-native-community/slider';
 import { Ionicons } from '@expo/vector-icons';
 import { AppSettings, LIGHTING_CONDITIONS, FilmOrientation } from '../types';
@@ -25,10 +26,12 @@ interface Props {
   updateSettings: (settings: AppSettings) => void;
 }
 
-// NOTE: Camera is now managed entirely by _layout.tsx
-// This screen only renders overlay/info UI
+// In PORTRAIT mode: ViewfinderScreen renders its own camera
+// In LANDSCAPE mode: Camera is rendered by _layout.tsx, this screen only shows info panel
 export default function ViewfinderScreen({ settings, updateSettings }: Props) {
+  const [permission, requestPermission] = useCameraPermissions();
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const cameraRef = useRef<any>(null);
 
   const isLandscape = dimensions.width > dimensions.height;
 
