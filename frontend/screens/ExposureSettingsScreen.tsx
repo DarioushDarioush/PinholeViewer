@@ -8,6 +8,7 @@ import {
   Platform,
   Dimensions,
 } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Ionicons } from '@expo/vector-icons';
 import { AppSettings, LIGHTING_CONDITIONS } from '../types';
 
@@ -26,12 +27,16 @@ interface Props {
 export default function ExposureSettingsScreen({ settings, updateSettings }: Props) {
   const scrollRef = useRef<ScrollView>(null);
   const [dimensions, setDimensions] = useState(Dimensions.get('window'));
+  const [permission] = useCameraPermissions();
+  const [cameraKey, setCameraKey] = useState(0);
+  const cameraRef = useRef<any>(null);
 
   const isLandscape = dimensions.width > dimensions.height;
 
   useEffect(() => {
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
       setDimensions(window);
+      setCameraKey(prev => prev + 1);
     });
     return () => subscription?.remove();
   }, []);
@@ -85,15 +90,78 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
     }, 100);
   };
 
+  const getEffectiveDimensions = () => {
+    const { width, height } = settings.filmFormat;
+    const orientation = settings.filmOrientation || 'landscape';
+    if (orientation === 'portrait') {
+      return { width: height, height: width };
+    }
+    return { width, height };
+  };
+
+  const calculateViewfinderSize = () => {
+    const screenWidth = dimensions.width;
+    const screenHeight = dimensions.height;
+    const effectiveDims = getEffectiveDimensions();
+    const filmAspectRatio = effectiveDims.width / effectiveDims.height;
+    
+    const availableWidth = screenWidth * 0.56;
+    const availableHeight = screenHeight - 80;
+    
+    let viewfinderHeight = availableHeight * 0.85;
+    let viewfinderWidth = viewfinderHeight * filmAspectRatio;
+    
+    if (viewfinderWidth > availableWidth * 0.9) {
+      viewfinderWidth = availableWidth * 0.9;
+      viewfinderHeight = viewfinderWidth / filmAspectRatio;
+    }
+    
+    return { width: viewfinderWidth, height: viewfinderHeight };
+  };
+
   const calculatedExposure = calculateExposure();
 
-  // Render the exposure content (used in both layouts)
+  // ========== Camera with Viewfinder Overlay ==========
+  const renderCameraWithOverlay = () => {
+    const viewfinderSize = calculateViewfinderSize();
+    
+    return (
+      <View style={styles.cameraWrapper}>
+        {permission?.granted ? (
+          <>
+            <CameraView
+              key={cameraKey}
+              style={StyleSheet.absoluteFill}
+              facing="back"
+              ref={cameraRef}
+            />
+            <View style={StyleSheet.absoluteFill}>
+              <View style={styles.overlayTop} />
+              <View style={styles.overlayMiddle}>
+                <View style={styles.overlaySide} />
+                <View style={[styles.viewfinderFrame, { width: viewfinderSize.width, height: viewfinderSize.height }]} />
+                <View style={styles.overlaySide} />
+              </View>
+              <View style={styles.overlayBottom} />
+            </View>
+          </>
+        ) : (
+          <View style={styles.cameraPlaceholder}>
+            <Ionicons name="camera-outline" size={40} color={TEXT_MUTED} />
+            <Text style={styles.cameraPlaceholderText}>Camera Preview</Text>
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  // ========== Exposure Content ==========
   const renderExposureContent = () => (
     <>
-      <Text style={[styles.title, isLandscape && styles.titleLandscape]}>Exposure Settings</Text>
+      <Text style={[styles.title, isLandscape && styles.titleLandscape]}>Exposure</Text>
       <Text style={[styles.subtitle, isLandscape && styles.subtitleLandscape]}>Sunny 16 Rule Calculator</Text>
 
-      {/* Calculated Exposure Result Display */}
+      {/* Calculated Exposure Result */}
       {calculatedExposure && (
         <View style={[styles.exposureResultBox, isLandscape && styles.exposureResultBoxLandscape]}>
           <Text style={[styles.exposureResultLabel, isLandscape && styles.exposureResultLabelLandscape]}>
@@ -104,9 +172,8 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
           </Text>
           <Text style={[styles.exposureResultCondition, isLandscape && styles.exposureResultConditionLandscape]}>
             {settings.selectedCondition}
-            {settings.bracketStops !== 0 && ` (${settings.bracketStops > 0 ? '+' : ''}${settings.bracketStops} stops)`}
+            {settings.bracketStops !== 0 && ` (${settings.bracketStops > 0 ? '+' : ''}${settings.bracketStops})`}
             {settings.useRedFilter && ' • Red Filter'}
-            {settings.useReciprocityFailure && ' • Reciprocity'}
           </Text>
         </View>
       )}
@@ -132,33 +199,28 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
           {settings.useRedFilter && <Ionicons name="checkmark" size={isLandscape ? 14 : 18} color={AMBER} />}
         </View>
         <View style={styles.toggleText}>
-          <Text style={[styles.toggleLabel, isLandscape && styles.toggleLabelLandscape]}>Red Filter Compensation</Text>
-          <Text style={[styles.toggleNote, isLandscape && styles.toggleNoteLandscape]}>Adds +3 stops to exposure time</Text>
+          <Text style={[styles.toggleLabel, isLandscape && styles.toggleLabelLandscape]}>Red Filter</Text>
+          <Text style={[styles.toggleNote, isLandscape && styles.toggleNoteLandscape]}>+3 stops</Text>
         </View>
       </TouchableOpacity>
 
       {/* Reciprocity Failure Toggle */}
       <TouchableOpacity
         style={[styles.toggleRow, isLandscape && styles.toggleRowLandscape]}
-        onPress={() =>
-          updateSettings({
-            ...settings,
-            useReciprocityFailure: !settings.useReciprocityFailure,
-          })
-        }
+        onPress={() => updateSettings({ ...settings, useReciprocityFailure: !settings.useReciprocityFailure })}
       >
         <View style={[styles.checkbox, isLandscape && styles.checkboxLandscape]}>
           {settings.useReciprocityFailure && <Ionicons name="checkmark" size={isLandscape ? 14 : 18} color={AMBER} />}
         </View>
         <View style={styles.toggleText}>
-          <Text style={[styles.toggleLabel, isLandscape && styles.toggleLabelLandscape]}>Reciprocity Failure</Text>
-          <Text style={[styles.toggleNote, isLandscape && styles.toggleNoteLandscape]}>Adjusts for long exposures (>1s)</Text>
+          <Text style={[styles.toggleLabel, isLandscape && styles.toggleLabelLandscape]}>Reciprocity</Text>
+          <Text style={[styles.toggleNote, isLandscape && styles.toggleNoteLandscape]}>Long exposure adj.</Text>
         </View>
       </TouchableOpacity>
 
       {/* Lighting Conditions */}
       <Text style={[styles.sectionTitle, isLandscape && styles.sectionTitleLandscape]}>
-        Select Lighting Conditions
+        Lighting Conditions
       </Text>
       <View style={[styles.conditionsGrid, isLandscape && styles.conditionsGridLandscape]}>
         {LIGHTING_CONDITIONS.map((condition, index) => (
@@ -178,9 +240,7 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
               <Text style={[styles.conditionName, isLandscape && styles.conditionNameLandscape]}>
                 {condition.name}
               </Text>
-              {!isLandscape && (
-                <Text style={styles.conditionDesc}>{condition.description}</Text>
-              )}
+              {!isLandscape && <Text style={styles.conditionDesc}>{condition.description}</Text>}
               <Text style={[styles.conditionFStop, isLandscape && styles.conditionFStopLandscape]}>
                 f/{condition.fStop}
               </Text>
@@ -191,21 +251,14 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
     </>
   );
 
-  // LANDSCAPE LAYOUT
+  // ========== LANDSCAPE LAYOUT ==========
   if (isLandscape) {
     return (
       <View style={styles.landscapeContainer}>
-        {/* Left side - branding/icon area */}
+        {/* LEFT: Exposure Settings */}
         <View style={styles.landscapeLeftPanel}>
-          <Ionicons name="sunny-outline" size={48} color={TEXT_MUTED} />
-          <Text style={styles.landscapeBrandText}>Exposure</Text>
-          <Text style={styles.landscapeBrandSubtext}>Calculator</Text>
-        </View>
-
-        {/* Right side - settings panel */}
-        <View style={styles.landscapeRightPanel}>
           <ScrollView 
-            style={styles.landscapeScrollView}
+            style={styles.scrollView}
             contentContainerStyle={styles.landscapeScrollContent}
             showsVerticalScrollIndicator={false}
             ref={scrollRef}
@@ -213,11 +266,16 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
             {renderExposureContent()}
           </ScrollView>
         </View>
+
+        {/* RIGHT: Camera/Viewfinder */}
+        <View style={styles.landscapeRightPanel}>
+          {renderCameraWithOverlay()}
+        </View>
       </View>
     );
   }
 
-  // PORTRAIT LAYOUT
+  // ========== PORTRAIT LAYOUT ==========
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView} ref={scrollRef}>
@@ -230,7 +288,6 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
 }
 
 const styles = StyleSheet.create({
-  // SHARED / PORTRAIT STYLES
   container: {
     flex: 1,
     backgroundColor: DARK_BG,
@@ -246,51 +303,50 @@ const styles = StyleSheet.create({
     color: AMBER,
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   subtitle: {
     color: '#999',
     fontSize: 14,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   exposureResultBox: {
     backgroundColor: AMBER,
-    padding: 20,
+    padding: 18,
     borderRadius: 12,
-    marginBottom: 20,
+    marginBottom: 18,
     alignItems: 'center',
   },
   exposureResultLabel: {
     color: DARK_BG,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    marginBottom: 4,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   exposureResultValue: {
     color: DARK_BG,
-    fontSize: 36,
+    fontSize: 34,
     fontWeight: 'bold',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   exposureResultCondition: {
     color: DARK_BG,
     fontSize: 12,
-    marginTop: 6,
-    opacity: 0.8,
+    marginTop: 4,
+    opacity: 0.85,
     textAlign: 'center',
   },
   infoBox: {
     backgroundColor: CHARCOAL,
-    padding: 16,
+    padding: 14,
     borderRadius: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   infoLabel: {
     color: '#999',
@@ -306,14 +362,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: CHARCOAL,
-    padding: 16,
+    padding: 14,
     borderRadius: 8,
-    marginBottom: 12,
-    minHeight: 56,
+    marginBottom: 10,
+    minHeight: 52,
   },
   checkbox: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     borderWidth: 2,
     borderColor: AMBER,
     borderRadius: 4,
@@ -326,7 +382,7 @@ const styles = StyleSheet.create({
   },
   toggleLabel: {
     color: '#ccc',
-    fontSize: 16,
+    fontSize: 15,
   },
   toggleNote: {
     color: '#666',
@@ -336,83 +392,67 @@ const styles = StyleSheet.create({
   sectionTitle: {
     color: '#999',
     fontSize: 14,
-    marginTop: 24,
-    marginBottom: 16,
+    marginTop: 20,
+    marginBottom: 14,
     textAlign: 'center',
   },
   conditionsGrid: {
-    gap: 12,
+    gap: 10,
   },
   conditionCard: {
     backgroundColor: CHARCOAL,
     borderWidth: 2,
     borderColor: '#333',
     borderRadius: 8,
-    padding: 16,
+    padding: 14,
     alignItems: 'center',
-    minHeight: 100,
+    minHeight: 90,
   },
   conditionCardSelected: {
     borderColor: AMBER,
     backgroundColor: 'rgba(245, 158, 11, 0.1)',
   },
   conditionIcon: {
-    fontSize: 40,
-    marginBottom: 8,
+    fontSize: 36,
+    marginBottom: 6,
   },
   conditionTextContainer: {
     alignItems: 'center',
   },
   conditionName: {
     color: AMBER,
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: 'bold',
-    marginBottom: 4,
+    marginBottom: 3,
     textAlign: 'center',
   },
   conditionDesc: {
     color: '#999',
-    fontSize: 12,
-    marginBottom: 8,
+    fontSize: 11,
+    marginBottom: 6,
     textAlign: 'center',
   },
   conditionFStop: {
     color: '#ccc',
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
 
-  // LANDSCAPE STYLES
+  // ========== LANDSCAPE ==========
   landscapeContainer: {
     flex: 1,
     flexDirection: 'row',
     backgroundColor: DARK_BG,
   },
   landscapeLeftPanel: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: '38%',
+    backgroundColor: CHARCOAL,
     borderRightWidth: 2,
     borderRightColor: AMBER,
-    paddingHorizontal: 20,
-  },
-  landscapeBrandText: {
-    color: AMBER,
-    fontSize: 24,
-    fontWeight: '700',
-    marginTop: 12,
-  },
-  landscapeBrandSubtext: {
-    color: TEXT_MUTED,
-    fontSize: 14,
-    marginTop: 4,
   },
   landscapeRightPanel: {
-    width: '42%',
-    backgroundColor: CHARCOAL,
-  },
-  landscapeScrollView: {
     flex: 1,
+    backgroundColor: '#000',
   },
   landscapeScrollContent: {
     padding: 16,
@@ -421,30 +461,30 @@ const styles = StyleSheet.create({
   },
   titleLandscape: {
     fontSize: 18,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   subtitleLandscape: {
-    fontSize: 12,
-    marginBottom: 16,
+    fontSize: 11,
+    marginBottom: 12,
   },
   exposureResultBoxLandscape: {
-    padding: 14,
+    padding: 12,
     borderRadius: 10,
-    marginBottom: 14,
+    marginBottom: 12,
   },
   exposureResultLabelLandscape: {
-    fontSize: 10,
+    fontSize: 9,
   },
   exposureResultValueLandscape: {
-    fontSize: 28,
+    fontSize: 26,
   },
   exposureResultConditionLandscape: {
     fontSize: 10,
-    marginTop: 4,
+    marginTop: 2,
   },
   infoBoxLandscape: {
-    padding: 12,
-    marginBottom: 14,
+    padding: 10,
+    marginBottom: 12,
   },
   infoLabelLandscape: {
     fontSize: 12,
@@ -453,13 +493,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   toggleRowLandscape: {
-    padding: 12,
+    padding: 10,
     marginBottom: 8,
-    minHeight: 48,
+    minHeight: 44,
   },
   checkboxLandscape: {
-    width: 20,
-    height: 20,
+    width: 18,
+    height: 18,
     marginRight: 10,
   },
   toggleLabelLandscape: {
@@ -470,30 +510,68 @@ const styles = StyleSheet.create({
   },
   sectionTitleLandscape: {
     fontSize: 12,
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 12,
+    marginBottom: 10,
   },
   conditionsGridLandscape: {
-    gap: 8,
+    gap: 6,
   },
   conditionCardLandscape: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    minHeight: 56,
+    padding: 10,
+    minHeight: 48,
   },
   conditionIconLandscape: {
-    fontSize: 24,
-    marginRight: 12,
+    fontSize: 22,
+    marginRight: 10,
     marginBottom: 0,
   },
   conditionNameLandscape: {
-    fontSize: 13,
+    fontSize: 12,
     marginBottom: 0,
     textAlign: 'left',
   },
   conditionFStopLandscape: {
-    fontSize: 12,
-    marginTop: 2,
+    fontSize: 11,
+    marginTop: 1,
+  },
+
+  // ========== CAMERA ==========
+  cameraWrapper: {
+    flex: 1,
+    position: 'relative',
+    backgroundColor: '#000',
+  },
+  overlayTop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  overlayMiddle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  overlaySide: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  overlayBottom: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+  },
+  viewfinderFrame: {
+    borderWidth: 3,
+    borderColor: AMBER,
+  },
+  cameraPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: DARK_BG,
+  },
+  cameraPlaceholderText: {
+    color: TEXT_MUTED,
+    fontSize: 14,
+    marginTop: 8,
   },
 });
