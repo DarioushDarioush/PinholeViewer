@@ -43,15 +43,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     return (settings.focalLength / settings.pinholeSize).toFixed(1);
   };
 
-  const getEffectiveDimensions = () => {
-    const { width, height } = settings.filmFormat;
-    const orientation = settings.filmOrientation || 'landscape';
-    if (orientation === 'portrait') {
-      return { width: height, height: width };
-    }
-    return { width, height };
-  };
-
   const calculateExposure = () => {
     if (!settings.selectedCondition) return null;
     
