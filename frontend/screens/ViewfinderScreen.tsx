@@ -362,4 +362,31 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 16,
   },
+  permissionExposure: {
+    marginTop: 24,
+    alignItems: 'center',
+    backgroundColor: AMBER,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  permissionExposureLabel: {
+    color: DARK_BG,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  permissionExposureValue: {
+    color: DARK_BG,
+    fontSize: 32,
+    fontWeight: 'bold',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  permissionExposureCondition: {
+    color: DARK_BG,
+    fontSize: 12,
+    marginTop: 4,
+    opacity: 0.8,
+  },
 });
