@@ -265,6 +265,18 @@ export default function Layout() {
 }
 
 const styles = StyleSheet.create({
+  // Portrait Viewfinder mode - camera managed by layout
+  portraitViewfinderContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  portraitCameraArea: {
+    flex: 1,
+  },
+  portraitTabBar: {
+    // The Tabs component will render just its tab bar here
+  },
+  
   // Landscape mode styles
   landscapeContainer: {
     flex: 1,
