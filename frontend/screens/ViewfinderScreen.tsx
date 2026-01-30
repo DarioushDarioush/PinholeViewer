@@ -548,6 +548,22 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 4,
   },
+  longPressHint: {
+    color: DARK_BG,
+    fontSize: 9,
+    fontWeight: '500',
+    marginTop: 8,
+    opacity: 0.6,
+    fontStyle: 'italic',
+  },
+  longPressHintPortrait: {
+    color: DARK_BG,
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 8,
+    opacity: 0.6,
+    fontStyle: 'italic',
+  },
   filterModifier: {
     backgroundColor: 'rgba(0,0,0,0.2)',
   },
