@@ -120,6 +120,9 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
     updateSettings({ ...settings, bracketStops: value });
   };
 
+  // Calculate exposure before permission checks so it's available for display
+  const calculatedExposure = calculateExposure();
+
   if (!permission) {
     return <View style={styles.container} />;
   }
