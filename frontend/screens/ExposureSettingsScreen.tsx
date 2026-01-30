@@ -191,6 +191,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 24,
   },
+  exposureResultBox: {
+    backgroundColor: AMBER,
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  exposureResultLabel: {
+    color: DARK_BG,
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  exposureResultValue: {
+    color: DARK_BG,
+    fontSize: 36,
+    fontWeight: 'bold',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  exposureResultCondition: {
+    color: DARK_BG,
+    fontSize: 12,
+    marginTop: 6,
+    opacity: 0.8,
+  },
   infoBox: {
     backgroundColor: CHARCOAL,
     padding: 16,
