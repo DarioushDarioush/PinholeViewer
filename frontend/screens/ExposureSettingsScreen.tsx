@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AppSettings, LIGHTING_CONDITIONS } from '../types';
-import { useNavigation } from '@react-navigation/native';
 
 const AMBER = '#F59E0B';
 const DARK_BG = '#0a0a0a';
@@ -21,11 +20,52 @@ interface Props {
 }
 
 export default function ExposureSettingsScreen({ settings, updateSettings }: Props) {
-  const navigation = useNavigation();
-  const scrollRef = useRef<any>(null);
+  const scrollRef = useRef<ScrollView>(null);
 
   const calculateFStop = () => {
     return (settings.focalLength / settings.pinholeSize).toFixed(1);
+  };
+
+  // Calculate exposure with all compensations
+  const calculateExposure = () => {
+    if (!settings.selectedCondition) return null;
+    
+    const condition = LIGHTING_CONDITIONS.find(c => c.name === settings.selectedCondition);
+    if (!condition) return null;
+    
+    const actualFStop = parseFloat(calculateFStop());
+    const referenceFStop = condition.fStop;
+    
+    const baseExposure = 1 / settings.iso;
+    let exposureTime = baseExposure * Math.pow(actualFStop / referenceFStop, 2);
+    
+    // Apply reciprocity failure if enabled
+    if (settings.useReciprocityFailure && exposureTime > 1) {
+      exposureTime = Math.pow(exposureTime, 1.3);
+    }
+    
+    // Apply red filter
+    if (settings.useRedFilter) {
+      exposureTime *= 8;
+    }
+    
+    // Apply bracketing
+    const bracketMultiplier = Math.pow(2, settings.bracketStops);
+    exposureTime *= bracketMultiplier;
+    
+    return formatExposure(exposureTime);
+  };
+
+  const formatExposure = (seconds: number) => {
+    if (seconds < 1) {
+      return `1/${Math.round(1 / seconds)}s`;
+    } else if (seconds < 60) {
+      return `${seconds.toFixed(1)}s`;
+    } else {
+      const minutes = Math.floor(seconds / 60);
+      const secs = Math.round(seconds % 60);
+      return secs > 0 ? `${minutes}m ${secs}s` : `${minutes}m`;
+    }
   };
 
   const handleConditionSelect = (conditionName: string) => {
@@ -34,6 +74,8 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     }, 100);
   };
+
+  const calculatedExposure = calculateExposure();
 
   return (
     <View style={styles.container}>
