@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { AppSettings, LIGHTING_CONDITIONS } from '../types';
+import { AppSettings, LIGHTING_CONDITIONS, FILTER_OPTIONS, FilterType } from '../types';
 
 const AMBER = '#F59E0B';
 const DARK_BG = '#0a0a0a';
