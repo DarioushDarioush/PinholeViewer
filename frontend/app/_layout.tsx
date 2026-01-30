@@ -178,7 +178,10 @@ export default function Layout() {
         tabBarActiveTintColor: AMBER,
         tabBarInactiveTintColor: '#666',
         headerShown: false,
+        // Make the content area transparent so camera shows through in portrait viewfinder
+        sceneStyle: { backgroundColor: 'transparent' },
       }}
+      sceneContainerStyle={{ backgroundColor: 'transparent' }}
     >
       <Tabs.Screen
         name="index"
