@@ -68,6 +68,7 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
       focalLength: settings.focalLength,
       pinholeSize: settings.pinholeSize,
       filmFormat: settings.filmFormat,
+      filmOrientation: settings.filmOrientation || 'landscape',
       iso: settings.iso,
     };
 
@@ -84,6 +85,7 @@ export default function CameraSettingsScreen({ settings, updateSettings }: Props
       focalLength: profile.focalLength,
       pinholeSize: profile.pinholeSize,
       filmFormat: profile.filmFormat,
+      filmOrientation: profile.filmOrientation || 'landscape',
       iso: profile.iso,
     });
     setShowProfiles(false);
