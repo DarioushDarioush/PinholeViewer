@@ -245,23 +245,6 @@ export default function Layout() {
 }
 
 const styles = StyleSheet.create({
-  // Portrait Viewfinder mode - camera fills background
-  portraitViewfinderContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  portraitCameraFill: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  portraitTabBarContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 85,
-  },
-  
   // Landscape mode styles
   landscapeContainer: {
     flex: 1,
