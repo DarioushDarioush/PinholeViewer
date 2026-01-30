@@ -158,18 +158,19 @@ export default function Layout() {
           facing="back"
           ref={cameraRef}
         />
-        {/* Dark overlay with transparent center for viewfinder */}
+        {/* Dark overlay with transparent center for viewfinder - all 4 sides */}
         <View style={styles.overlayContainer} pointerEvents="none">
-          {/* Top area - smaller to push viewfinder up */}
+          {/* Top dark area */}
           <View style={[styles.overlayDark, !isLandscape && { flex: 0.6 }]} />
-          <View style={styles.overlayMiddleRow}>
-            <View style={styles.overlayDark} />
+          {/* Middle row: LEFT dark | viewfinder | RIGHT dark */}
+          <View style={[styles.overlayMiddleRow, { height: viewfinderSize.height }]}>
+            <View style={styles.overlaySide} />
             <View style={[styles.viewfinderCutout, { width: viewfinderSize.width, height: viewfinderSize.height }]}>
               <View style={styles.viewfinderBorder} />
             </View>
-            <View style={styles.overlayDark} />
+            <View style={styles.overlaySide} />
           </View>
-          {/* Bottom area - larger to create space for exposure panel */}
+          {/* Bottom dark area */}
           <View style={[styles.overlayDark, !isLandscape && { flex: 2.0 }]} />
         </View>
       </View>
