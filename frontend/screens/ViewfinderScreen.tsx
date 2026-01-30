@@ -160,7 +160,6 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   }
 
   const viewfinderSize = calculateViewfinderSize();
-  const calculatedExposure = calculateExposure();
 
   return (
     <View style={styles.container}>
