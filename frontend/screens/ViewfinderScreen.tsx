@@ -94,76 +94,8 @@ export default function ViewfinderScreen({ settings, updateSettings }: Props) {
   const calculatedExposure = calculateExposure();
   const filmOrientationLabel = settings.filmOrientation === 'portrait' ? 'Portrait' : 'Landscape';
 
-  // Calculate viewfinder size for portrait mode
-  const getEffectiveDimensions = () => {
-    const { width, height } = settings.filmFormat;
-    const orientation = settings.filmOrientation || 'landscape';
-    if (orientation === 'portrait') {
-      return { width: height, height: width };
-    }
-    return { width, height };
-  };
-
-  const calculateViewfinderSize = () => {
-    const effectiveDims = getEffectiveDimensions();
-    const filmAspectRatio = effectiveDims.width / effectiveDims.height;
-    
-    // In portrait, camera is the main area
-    const availableWidth = dimensions.width - 32;
-    const availableHeight = dimensions.height * 0.50;
-    
-    let viewfinderWidth = availableWidth * 0.85;
-    let viewfinderHeight = viewfinderWidth / filmAspectRatio;
-    
-    if (viewfinderHeight > availableHeight * 0.85) {
-      viewfinderHeight = availableHeight * 0.85;
-      viewfinderWidth = viewfinderHeight * filmAspectRatio;
-    }
-    
-    return { width: viewfinderWidth, height: viewfinderHeight };
-  };
-
-  // ========== Camera with Centered Viewfinder Frame (PORTRAIT mode only) ==========
-  const renderCameraWithOverlay = () => {
-    const viewfinderSize = calculateViewfinderSize();
-    
-    return (
-      <View style={styles.cameraContainer}>
-        <CameraView
-          style={styles.camera}
-          facing="back"
-          ref={cameraRef}
-        />
-        {/* Dark overlay with transparent center for viewfinder */}
-        <View style={styles.overlayContainer} pointerEvents="none">
-          {/* Top dark area */}
-          <View style={styles.overlayDark} />
-          {/* Middle row with viewfinder cutout */}
-          <View style={styles.overlayMiddleRow}>
-            <View style={styles.overlayDark} />
-            <View style={[styles.viewfinderCutout, { width: viewfinderSize.width, height: viewfinderSize.height }]}>
-              <View style={styles.viewfinderBorder} />
-            </View>
-            <View style={styles.overlayDark} />
-          </View>
-          {/* Bottom dark area */}
-          <View style={styles.overlayDark} />
-        </View>
-      </View>
-    );
-  };
-
-  // ========== Permission Request ==========
-  const renderPermissionRequest = () => (
-    <View style={styles.permissionContainer}>
-      <Ionicons name="camera-outline" size={64} color={TEXT_MUTED} />
-      <Text style={styles.permissionTitle}>Camera Access Required</Text>
-      <Text style={styles.permissionText}>Grant camera permission to use the viewfinder</Text>
-      <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-        <Text style={styles.permissionButtonText}>Enable Camera</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // NOTE: Camera is now rendered by _layout.tsx for BOTH portrait and landscape
+  // This screen only shows UI overlay elements
 
   // ========== Info Panel Content (RIGHT side in landscape) ==========
   const renderInfoPanelContent = () => (
