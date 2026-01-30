@@ -4,6 +4,7 @@ import { Tabs, usePathname } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const AMBER = '#F59E0B';
@@ -22,17 +23,22 @@ const FILM_FORMATS = [
   { name: '6x17', width: 60, height: 170 },
 ];
 
-// Context to share camera-related data with child screens
+// Context to share camera-related data and countdown with child screens
 interface CameraContextType {
   isLandscape: boolean;
   cameraPermission: { granted: boolean } | null;
   requestCameraPermission: () => Promise<void>;
+  // Countdown functionality
+  countdownSeconds: number | null;
+  startCountdown: (seconds: number) => void;
 }
 
 const CameraContext = createContext<CameraContextType>({
   isLandscape: false,
   cameraPermission: null,
   requestCameraPermission: async () => {},
+  countdownSeconds: null,
+  startCountdown: () => {},
 });
 
 export const useCameraContext = () => useContext(CameraContext);
