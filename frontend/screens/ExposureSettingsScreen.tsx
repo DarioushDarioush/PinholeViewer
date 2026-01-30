@@ -85,73 +85,7 @@ export default function ExposureSettingsScreen({ settings, updateSettings }: Pro
     }, 100);
   };
 
-  const getEffectiveDimensions = () => {
-    const { width, height } = settings.filmFormat;
-    const orientation = settings.filmOrientation || 'landscape';
-    if (orientation === 'portrait') {
-      return { width: height, height: width };
-    }
-    return { width, height };
-  };
-
-  const calculateViewfinderSize = () => {
-    const effectiveDims = getEffectiveDimensions();
-    const filmAspectRatio = effectiveDims.width / effectiveDims.height;
-    
-    const availableWidth = dimensions.width * 0.60;
-    const availableHeight = dimensions.height - 60;
-    
-    let viewfinderWidth = availableWidth * 0.85;
-    let viewfinderHeight = viewfinderWidth / filmAspectRatio;
-    
-    if (viewfinderHeight > availableHeight * 0.85) {
-      viewfinderHeight = availableHeight * 0.85;
-      viewfinderWidth = viewfinderHeight * filmAspectRatio;
-    }
-    
-    return { width: viewfinderWidth, height: viewfinderHeight };
-  };
-
   const calculatedExposure = calculateExposure();
-
-  // ========== Camera with Viewfinder (for landscape LEFT panel) ==========
-  const renderCameraWithOverlay = () => {
-    const viewfinderSize = calculateViewfinderSize();
-    
-    if (!permission?.granted) {
-      return (
-        <View style={styles.permissionContainer}>
-          <Ionicons name="camera-outline" size={48} color={TEXT_MUTED} />
-          <Text style={styles.permissionTitle}>Camera Access Required</Text>
-          <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
-            <Text style={styles.permissionButtonText}>Enable Camera</Text>
-          </TouchableOpacity>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.cameraContainer}>
-        <CameraView
-          key={cameraKey}
-          style={styles.camera}
-          facing="back"
-          ref={cameraRef}
-        />
-        <View style={[styles.overlayContainer, { pointerEvents: 'none' }]}>
-          <View style={styles.overlayDark} />
-          <View style={styles.overlayMiddleRow}>
-            <View style={styles.overlayDark} />
-            <View style={[styles.viewfinderCutout, { width: viewfinderSize.width, height: viewfinderSize.height }]}>
-              <View style={styles.viewfinderBorder} />
-            </View>
-            <View style={styles.overlayDark} />
-          </View>
-          <View style={styles.overlayDark} />
-        </View>
-      </View>
-    );
-  };
 
   // ========== Exposure Content ==========
   const renderExposureContent = () => (
