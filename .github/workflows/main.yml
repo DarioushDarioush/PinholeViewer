@@ -1,0 +1,43 @@
+name: Build App
+on:
+  push:
+    # Trigger only for main branch.
+    branches: [ main ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      # Get the app source
+      - name: Get the source
+        uses: actions/checkout@v2
+
+      # Compile the apk
+      - name: Generate Release APK
+        run: ./gradlew assembleRelease
+
+      # Sign the apk
+      - name: Sign APK
+        uses: r0adkll/sign-android-release@v1
+        # ID used to access action output
+        id: sign_app
+        with:
+          releaseDirectory: app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "31.0.0"
+
+      # Send to the APK to Telegram
+      - name: Send the APK to Telegram
+        env:
+          APK_PATH: ${{steps.sign_app.outputs.signedReleaseFile}}
+          BOT_API_KEY: ${{ secrets.BOT_API_KEY }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+        run: |
+          curl -F chat_id=$CHAT_ID -F document=@"${APK_PATH}" -F caption="Template-$(date +"%Y%m%d-%H%M")" https://api.telegram.org/bot${BOT_API_KEY}/sendDocument
